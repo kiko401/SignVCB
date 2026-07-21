@@ -1,17 +1,19 @@
 """认证接口"""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import create_access_token, verify_password, get_password_hash
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserResponse
+from app.core.rate_limit import limiter
 from sqlalchemy import select
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=TokenResponse)
-async def register(req: RegisterRequest, session: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, req: RegisterRequest, session: AsyncSession = Depends(get_db)):
     """注册"""
     result = await session.execute(
         select(User).where(User.username == req.username)
@@ -43,7 +45,8 @@ async def register(req: RegisterRequest, session: AsyncSession = Depends(get_db)
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(req: LoginRequest, session: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(request: Request, req: LoginRequest, session: AsyncSession = Depends(get_db)):
     """登录"""
     result = await session.execute(
         select(User).where(User.username == req.username)

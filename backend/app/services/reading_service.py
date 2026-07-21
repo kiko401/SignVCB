@@ -1,5 +1,5 @@
 """读物服务"""
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
@@ -9,6 +9,7 @@ from app.schemas.reading import (
     ReadingContentResponse,
     ReadingSentenceResponse
 )
+from app.schemas.alignment import AlignmentOp
 
 
 class ReadingService:
@@ -52,23 +53,14 @@ class ReadingService:
         )
         sentences = result.scalars().all()
 
-        book_response = ReadingBookResponse(
-            id=book.id,
-            title=book.title,
-            age_group=book.age_group,
-            cover_url=book.cover_url,
-            difficulty=book.difficulty
-        )
-
         sentence_responses = [
             ReadingSentenceResponse(
-                id=s.id,
-                sentence_index=s.sentence_index,
-                original_text=s.original_text,
+                index=s.sentence_index,
+                original=s.original_text,
                 sign_text=s.sign_text,
                 alignment_ops=json.loads(s.alignment_ops) if s.alignment_ops else []
             )
             for s in sentences
         ]
 
-        return ReadingContentResponse(book=book_response, sentences=sentence_responses)
+        return ReadingContentResponse(book_id=book.id, sentences=sentence_responses)

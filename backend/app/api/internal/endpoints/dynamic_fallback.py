@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app.core.database import AsyncSessionLocal
 from sqlalchemy import select
 from app.models.fallback import DynamicFallback
+from app.schemas.fallback import DynamicFallbackResponse, FallbackItem
+from datetime import datetime
 
 router = APIRouter()
 
@@ -13,5 +15,9 @@ async def get_dynamic_fallback():
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(DynamicFallback))
         entries = result.scalars().all()
-        fallback_dict = {e.oov_word: e.fallback_word for e in entries}
-        return {"fallback_dict": fallback_dict}
+        items = [FallbackItem(oov=e.oov_word, fallback=e.fallback_word) for e in entries]
+        return DynamicFallbackResponse(
+            items=items,
+            server_time=datetime.utcnow().isoformat() + "Z",
+            count=len(items)
+        )

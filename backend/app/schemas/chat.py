@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class PreheatData(BaseModel):
-    original: str
+    original: str = ""
 
 
 class FirstPassData(BaseModel):
@@ -44,6 +44,7 @@ class TtsResponse(BaseModel):
 
 class SuggestReplyRequest(BaseModel):
     text: str
+    context: Optional[str] = None
 
 
 class SuggestionItem(BaseModel):

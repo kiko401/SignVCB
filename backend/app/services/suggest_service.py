@@ -22,9 +22,10 @@ class SuggestService:
     def get_client(cls):
         return cls()
 
-    async def generate_suggestions(self, text: str, num: int = 3) -> list[dict]:
+    async def generate_suggestions(self, text: str, context: str = None, num: int = 3) -> list[dict]:
         """生成建议回复"""
-        prompt = f"用户说了：{text}\n请生成 {num} 个合适的回复建议，每个建议要简短自然。"
+        ctx = f"\n上下文：{context}" if context else ""
+        prompt = f"上下文：{ctx}\n用户说了：{text}\n请生成 {num} 个合适的回复建议，每个建议要简短自然。"
 
         try:
             resp = await self.client.post(

@@ -73,3 +73,7 @@ class OOVFallbackConsumer:
         """停止消费者"""
         self.running = False
         await self.redis_client.close()
+
+    def run_sync(self):
+        """同步运行（供 Thread 调用）"""
+        asyncio.run(self.start())

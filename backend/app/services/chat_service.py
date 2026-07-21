@@ -1,9 +1,10 @@
 """聊天服务编排层"""
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from app.services.engine_client import EngineClient, EngineTimeoutError
 from app.services.asr_service import ASRService
 from app.services.tts_service import MiniMaxTTSService
 from app.services.suggest_service import SuggestService
+from app.schemas.chat import SuggestionItem
 import loguru
 
 logger = loguru.logger
@@ -53,11 +54,12 @@ class ChatService:
         return await tts_service.synthesize_async(text, speed)
 
     @staticmethod
-    async def suggest_reply(text: str) -> list[dict]:
+    async def suggest_reply(text: str, context: str = None) -> list[SuggestionItem]:
         """生成建议回复"""
         suggest_service = SuggestService.get_client()
         try:
-            return await suggest_service.generate_suggestions(text)
+            results = await suggest_service.generate_suggestions(text, context=context)
+            return [SuggestionItem(**r) if isinstance(r, dict) else r for r in results]
         finally:
             await suggest_service.close()
 

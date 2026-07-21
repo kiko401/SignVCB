@@ -22,4 +22,4 @@ class PracticeValidateRequest(BaseModel):
 
 class PracticeValidateResponse(BaseModel):
     correct: bool
-    correct_answer: Union[List[str], str]
+    feedback: str

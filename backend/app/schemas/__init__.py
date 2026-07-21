@@ -21,6 +21,7 @@ from app.schemas.practice import (
     PracticeValidateRequest, PracticeValidateResponse
 )
 from app.schemas.common import ErrorResponse, SuccessResponse
+from app.schemas.fallback import FallbackItem, DynamicFallbackResponse
 
 __all__ = [
     "RegisterRequest", "LoginRequest", "TokenResponse", "UserResponse",
@@ -37,4 +38,5 @@ __all__ = [
     "PracticeQuestionResponse",
     "PracticeValidateRequest", "PracticeValidateResponse",
     "ErrorResponse", "SuccessResponse",
+    "FallbackItem", "DynamicFallbackResponse",
 ]

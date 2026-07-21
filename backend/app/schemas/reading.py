@@ -1,6 +1,7 @@
 """读物相关 Schema"""
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
+from app.schemas.alignment import AlignmentOp
 
 
 class ReadingBookResponse(BaseModel):
@@ -11,18 +12,17 @@ class ReadingBookResponse(BaseModel):
     difficulty: int
 
 
-class ReadingBooksResponse(BaseModel):
-    books: list[ReadingBookResponse]
-
-
 class ReadingSentenceResponse(BaseModel):
-    id: int
-    sentence_index: int
-    original_text: str
+    index: int
+    original: str
     sign_text: str
-    alignment_ops: list
+    alignment_ops: List[AlignmentOp]
+
+
+class ReadingBooksResponse(BaseModel):
+    books: List[ReadingBookResponse]
 
 
 class ReadingContentResponse(BaseModel):
-    book: ReadingBookResponse
-    sentences: list[ReadingSentenceResponse]
+    book_id: int
+    sentences: List[ReadingSentenceResponse]
