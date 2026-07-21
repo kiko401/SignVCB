@@ -16,12 +16,12 @@ router = APIRouter()
 async def get_question(
     request: Request,
     level: str = None,
-    q_type: str = None,
+    type: str = None,
     session: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取随机练习题"""
-    question = await PracticeService.get_random_question(session, level, q_type)
+    question = await PracticeService.get_random_question(session, level, type)
     if not question:
         return PracticeQuestionResponse(
             id=0, level="", type="", image_urls=[]

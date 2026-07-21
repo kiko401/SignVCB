@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+import redis.asyncio as redis
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -7,7 +8,7 @@ settings = get_settings()
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
-    pool_pre_ping=True,
+    pool_pre_ping=False,
     pool_size=10,
     max_overflow=20,
 )
@@ -19,6 +20,8 @@ AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+redis_client = redis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
 
 
 class Base(DeclarativeBase):
