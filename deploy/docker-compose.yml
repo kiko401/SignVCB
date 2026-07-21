@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  signvcb-mysql:
+    image: mysql:8.0
+    container_name: signvcb-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: --innodb-buffer-pool-size=128M --max-connections=50 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    mem_limit: 384m
+    cpus: '0.5'
+    networks:
+      - signvcb-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  signvcb-redis:
+    image: redis:7-alpine
+    container_name: signvcb-redis
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
+    mem_limit: 64m
+    cpus: '0.2'
+    networks:
+      - signvcb-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  signvcb-server:
+    build: ./backend
+    container_name: signvcb-server
+    ports:
+      - "8012:8000"
+    environment:
+      - MYSQL_HOST=signvcb-mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - REDIS_HOST=signvcb-redis
+      - REDIS_PORT=6379
+      - ALGORITHM_ENGINE_URL=http://signvcb-engine:8001
+      - ENGINE_HOST=signvcb-engine
+      - ENGINE_PORT=8001
+      - ENGINE_TIMEOUT=10.0
+      - ENGINE_CONNECT_TIMEOUT=2.0
+      - JWT_SECRET=${JWT_SECRET}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL}
+      - TENCENT_ASR_SECRET_ID=${TENCENT_ASR_SECRET_ID}
+      - TENCENT_ASR_SECRET_KEY=${TENCENT_ASR_SECRET_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - MINIMAX_GROUP_ID=${MINIMAX_GROUP_ID}
+      - ENABLE_STREAM_MASKING=${ENABLE_STREAM_MASKING}
+      - SHOW_OOV_MAP=${SHOW_OOV_MAP}
+      - SHOW_NMM_HINTS=${SHOW_NMM_HINTS}
+      - SSE_TIMEOUT_MS=${SSE_TIMEOUT_MS}
+      - SERVER_PUBLIC_HOST=${SERVER_PUBLIC_HOST}
+    depends_on:
+      signvcb-mysql:
+        condition: service_healthy
+      signvcb-redis:
+        condition: service_started
+      signvcb-engine:
+        condition: service_healthy
+    volumes:
+      - tts_audio:/data/tts_audio
+      - server_logs:/data/logs
+    mem_limit: 384m
+    cpus: '0.8'
+    networks:
+      - signvcb-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  signvcb-engine:
+    build: ./engine
+    container_name: signvcb-engine
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL}
+      - DEEPSEEK_TIMEOUT=4.0
+      - DEEPSEEK_CONNECT_TIMEOUT=2.0
+      - BACKEND_HOST=signvcb-server
+      - BACKEND_PORT=8000
+      - REDIS_HOST=signvcb-redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - OMP_NUM_THREADS=2
+      - TORCH_NUM_THREADS=2
+      - OOV_SIMILARITY_THRESHOLD=0.8
+      - DYNAMIC_FALLBACK_SYNC_INTERVAL=600
+    volumes:
+      - engine_models:/app/models
+      - engine_data:/app/data
+      - engine_logs:/data/logs
+    mem_limit: 1300m
+    cpus: '1.5'
+    networks:
+      - signvcb-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mysql_data:
+  tts_audio:
+  server_logs:
+  engine_models:
+  engine_data:
+  engine_logs:
+
+networks:
+  signvcb-net:
+    driver: bridge
