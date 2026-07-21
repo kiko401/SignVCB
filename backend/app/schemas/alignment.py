@@ -1,6 +1,7 @@
 """对齐操作 Schema"""
 from pydantic import BaseModel, field_validator
 from enum import Enum
+from typing import Optional
 
 
 class AlignmentOpType(str, Enum):
