@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "book_id": 1,
+    "sentence_index": 0,
+    "original_text": "小猫跟妈妈一起去钓鱼。",
+    "sign_text": "小猫跟妈妈一起去钓鱼。",
+    "alignment_ops": []
+  },
+  {
+    "id": 2,
+    "book_id": 1,
+    "sentence_index": 1,
+    "original_text": "小猫一会儿捉蝴蝶，一会儿捉蜻蜓。",
+    "sign_text": "小猫一会儿捉蝴蝶，一会儿捉蜻蜓。",
+    "alignment_ops": []
+  },
+  {
+    "id": 3,
+    "book_id": 1,
+    "sentence_index": 2,
+    "original_text": "最后小猫一条鱼也没钓到。",
+    "sign_text": "最后小猫一条鱼也没钓到。",
+    "alignment_ops": []
+  },
+  {
+    "id": 4,
+    "book_id": 2,
+    "sentence_index": 0,
+    "original_text": "小马驮着麦子去磨坊。",
+    "sign_text": "小马驮着麦子去磨坊。",
+    "alignment_ops": []
+  },
+  {
+    "id": 5,
+    "book_id": 2,
+    "sentence_index": 1,
+    "original_text": "小马遇到一条小河，不知道深浅。",
+    "sign_text": "小马遇到一条小河，不知道深浅。",
+    "alignment_ops": []
+  },
+  {
+    "id": 6,
+    "book_id": 2,
+    "sentence_index": 2,
+    "original_text": "小马问了小松鼠和小黄牛，最后自己试了试。",
+    "sign_text": "小马问了小松鼠和小黄牛，最后自己试了试。",
+    "alignment_ops": []
+  },
+  {
+    "id": 7,
+    "book_id": 3,
+    "sentence_index": 0,
+    "original_text": "古时候有个小孩叫曹冲。",
+    "sign_text": "古时候有个小孩叫曹冲。",
+    "alignment_ops": []
+  },
+  {
+    "id": 8,
+    "book_id": 3,
+    "sentence_index": 1,
+    "original_text": "别人送了一头大象，没人知道它有多重。",
+    "sign_text": "别人送了一头大象，没人知道它有多重。",
+    "alignment_ops": []
+  },
+  {
+    "id": 9,
+    "book_id": 3,
+    "sentence_index": 2,
+    "original_text": "曹冲用船和石头称出了大象的重量。",
+    "sign_text": "曹冲用船和石头称出了大象的重量。",
+    "alignment_ops": []
+  }
+]
