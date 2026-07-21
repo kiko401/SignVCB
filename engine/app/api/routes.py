@@ -1,4 +1,5 @@
 """API 路由"""
+from datetime import datetime
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 import loguru
@@ -45,5 +46,11 @@ async def get_dynamic_fallback():
     from app.services.dynamic_fallback_service import get_dynamic_fallback_service
     service = get_dynamic_fallback_service()
     if service:
-        return {"fallback_dict": service.fallback_dict}
-    return {"fallback_dict": {}}
+        items = [{"oov": k, "fallback": v} for k, v in service.fallback_dict.items()]
+    else:
+        items = []
+    return {
+        "items": items,
+        "server_time": datetime.utcnow().isoformat() + "Z",
+        "count": len(items)
+    }

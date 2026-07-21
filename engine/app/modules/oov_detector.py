@@ -22,10 +22,12 @@ class OOVDetector:
 
     def load(self, index_path: str, vocab_path: str, fallback_path: str = None):
         """加载 FAISS 索引和词表"""
+        from app.core.config import get_settings
         from app.core.onnx_encoder import ONNXEncoder
 
+        settings = get_settings()
         self.encoder = ONNXEncoder.get_instance()
-        onnx_path = str(Path(index_path).parent.parent / "onnx" / "csl_encoder.onnx")
+        onnx_path = settings.MODEL_PATH
         if Path(onnx_path).exists():
             self.encoder.load(onnx_path, vocab_path)
         else:

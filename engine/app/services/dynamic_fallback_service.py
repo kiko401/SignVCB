@@ -39,7 +39,13 @@ class DynamicFallbackService:
                 resp = await client.get(f"{self.backend_url}/internal/dynamic_fallback")
                 if resp.status_code == 200:
                     data = resp.json()
-                    new_dict = data.get("fallback_dict", {})
+                    # 支持新旧两种格式（后端可能尚未更新到新格式）
+                    if "items" in data:
+                        new_dict = {item["oov"]: item["fallback"] for item in data.get("items", [])}
+                    elif "fallback_dict" in data:
+                        new_dict = data.get("fallback_dict", {})
+                    else:
+                        new_dict = {}
                     old_count = len(self.fallback_dict)
                     self.fallback_dict.update(new_dict)
                     new_count = len(self.fallback_dict)
