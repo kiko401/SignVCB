@@ -1,6 +1,8 @@
 """Redis 服务"""
+import asyncio
+import json as json_module
 import redis.asyncio as redis
-from typing import Optional
+from typing import Optional, Callable, Awaitable
 import loguru
 
 logger = loguru.logger
@@ -58,6 +60,47 @@ class RedisService:
             await self.client.publish(channel, message)
         except Exception as e:
             logger.error(f"Publish failed: {e}")
+
+    async def subscribe(self, channel: str) -> redis.client.PubSub:
+        """订阅频道，返回 PubSub 对象"""
+        if not self.client:
+            raise RuntimeError("Redis not connected")
+        pubsub = self.client.pubsub()
+        await pubsub.subscribe(channel)
+        return pubsub
+
+    async def subscribe_dynamic_fallback(self, callback: Callable[[str, str], Awaitable[None]]):
+        """订阅 dynamic_fallback_updated 频道，收到消息时调用 callback(oov_word, fallback_word)。
+
+        后端 OOV 消费者 UPSERT 到 MySQL 后发布 PubSub，
+        算法引擎订阅并实时增量更新本地 fallback_dict。
+        异常后指数退避重连（最大 30s）。
+        """
+        channel = "pubsub:dynamic_fallback_updated"
+        retry_delay = 3
+        max_delay = 30
+
+        while True:
+            try:
+                pubsub = await self.subscribe(channel)
+                logger.info(f"Subscribed to {channel}")
+                retry_delay = 3  # 重置退避
+
+                async for message in pubsub.listen():
+                    if message["type"] == "message":
+                        try:
+                            data = json_module.loads(message["data"])
+                            oov_word = data.get("oov", "")
+                            fallback_word = data.get("fallback", "")
+                            if oov_word and fallback_word:
+                                await callback(oov_word, fallback_word)
+                                logger.debug(f"PubSub update: {oov_word} -> {fallback_word}")
+                        except Exception as e:
+                            logger.warning(f"PubSub message parse error: {e}")
+            except Exception as e:
+                logger.warning(f"PubSub subscribe error: {e}, retrying in {retry_delay}s...")
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 2, max_delay)
 
 
 def get_redis_service() -> Optional[RedisService]:

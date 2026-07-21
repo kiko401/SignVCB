@@ -28,11 +28,14 @@ class DeepSeekClient:
         return _client
 
     @classmethod
-    def close_shared_client(cls):
+    async def close_shared_client(cls):
+        """关闭共享客户端"""
         global _client
         if _client is not None:
-            import asyncio
-            asyncio.create_task(_client.client.aclose())
+            try:
+                await _client.client.aclose()
+            except Exception as e:
+                logger.warning(f"LLM client close error: {e}")
             _client = None
 
     async def chat(
@@ -64,5 +67,6 @@ def get_shared_client() -> DeepSeekClient:
     return DeepSeekClient.get_client()
 
 
-def close_shared_client():
-    DeepSeekClient.close_shared_client()
+async def close_shared_client():
+    """模块级关闭函数（供 lifespan 调用，必须 await）"""
+    await DeepSeekClient.close_shared_client()

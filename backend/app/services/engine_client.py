@@ -1,7 +1,7 @@
 """算法引擎客户端"""
 import httpx
 import json
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 import loguru
 
 logger = loguru.logger
@@ -13,22 +13,40 @@ class EngineTimeoutError(Exception):
 
 
 class EngineClient:
-    """算法引擎 HTTP 客户端"""
+    """算法引擎 HTTP 客户端（懒加载单例）"""
+
+    _instance: Optional["EngineClient"] = None
+    _client: Optional[httpx.AsyncClient] = None
 
     def __init__(self, base_url: str = None, timeout: float = None):
         from app.core.config import get_settings
         settings = get_settings()
-
         self.base_url = base_url or settings.ALGORITHM_ENGINE_URL
         self.timeout = timeout or settings.ENGINE_TIMEOUT
-        self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(self.timeout),
-            follow_redirects=True
-        )
 
     @classmethod
-    def get_instance(cls):
-        return cls()
+    def get_instance(cls) -> "EngineClient":
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def get_client(cls) -> httpx.AsyncClient:
+        """懒加载共享 httpx 客户端"""
+        if cls._client is None or cls._client.is_closed:
+            cls._client = httpx.AsyncClient(
+                timeout=httpx.Timeout(cls._instance.timeout if cls._instance else 10.0),
+                follow_redirects=True,
+                limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
+            )
+        return cls._client
+
+    @classmethod
+    async def close(cls):
+        """关闭共享客户端（在 lifespan 关闭阶段调用）"""
+        if cls._client is not None and not cls._client.is_closed:
+            await cls._client.aclose()
+            cls._client = None
 
     async def stream_rewrite(
         self, text: str, context: str = None, request_id: str = ""
@@ -39,7 +57,7 @@ class EngineClient:
             headers["X-Request-ID"] = request_id
 
         try:
-            async with self.client.stream(
+            async with self.get_client().stream(
                 "POST",
                 f"{self.base_url}/internal/rewrite",
                 json={"text": text, "context": context},
@@ -62,7 +80,7 @@ class EngineClient:
     async def normalize(self, text: str, num_options: int = 3) -> list[str]:
         """调用 normalize 接口"""
         try:
-            resp = await self.client.post(
+            resp = await self.get_client().post(
                 f"{self.base_url}/internal/normalize",
                 json={"text": text, "num_options": num_options}
             )
@@ -74,13 +92,10 @@ class EngineClient:
     async def health_check(self) -> bool:
         """检查引擎健康状态"""
         try:
-            resp = await self.client.get(f"{self.base_url}/health")
+            resp = await self.get_client().get(f"{self.base_url}/health")
             return resp.status_code == 200
         except:
             return False
-
-    async def close(self):
-        await self.client.aclose()
 
 
 def format_sse_event(event: str, data: dict) -> str:
