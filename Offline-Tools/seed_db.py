@@ -8,8 +8,9 @@ import asyncio
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "backend")
-sys.path.insert(0, "Offline-Tools")
+# 修正：使用相对路径，避免与 backend 内部 import 冲突
+sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
+sys.path.insert(0, str(Path(__file__).parent))
 
 
 async def seed_reading_data():
@@ -23,8 +24,8 @@ async def seed_reading_data():
         engine = create_async_engine(settings.DATABASE_URL)
         Session = async_sessionmaker(engine)
 
-        books_path = Path("deploy/init_data/reading_books.json")
-        sentences_path = Path("deploy/init_data/reading_sentences.json")
+        books_path = Path(__file__).parent.parent / "deploy" / "init_data" / "reading_books.json"
+        sentences_path = Path(__file__).parent.parent / "deploy" / "init_data" / "reading_sentences.json"
 
         if not books_path.exists():
             print("[WARN] reading_books.json not found, skipping seed")
@@ -78,7 +79,7 @@ async def seed_practice_data():
         engine = create_async_engine(settings.DATABASE_URL)
         Session = async_sessionmaker(engine)
 
-        questions_path = Path("deploy/init_data/practice_questions.json")
+        questions_path = Path(__file__).parent.parent / "deploy" / "init_data" / "practice_questions.json"
 
         if not questions_path.exists():
             print("[WARN] practice_questions.json not found, skipping seed")
