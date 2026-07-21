@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "小猫钓鱼",
+    "age_group": "L1",
+    "cover_url": "https://cdn.example.com/covers/cat_fishing.png",
+    "difficulty": 1
+  },
+  {
+    "id": 2,
+    "title": "小马过河",
+    "age_group": "L2",
+    "cover_url": "https://cdn.example.com/covers/horse_river.png",
+    "difficulty": 2
+  },
+  {
+    "id": 3,
+    "title": "曹冲称象",
+    "age_group": "L3",
+    "cover_url": "https://cdn.example.com/covers/cao_chong.png",
+    "difficulty": 3
+  }
+]

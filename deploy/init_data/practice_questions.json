@@ -1,0 +1,164 @@
+[
+  {
+    "level": "L1",
+    "type": "word_match",
+    "question": {
+      "mode": "image",
+      "image_urls": [
+        "https://cdn.example.com/wordcards/apple.png",
+        "https://cdn.example.com/wordcards/banana.png"
+      ],
+      "text": null,
+      "choices": [
+        "苹果",
+        "香蕉",
+        "葡萄",
+        "西瓜"
+      ],
+      "scrambled": [],
+      "target_text": null
+    },
+    "answer": [
+      "苹果"
+    ]
+  },
+  {
+    "level": "L1",
+    "type": "word_match",
+    "question": {
+      "mode": "image",
+      "image_urls": [
+        "https://cdn.example.com/wordcards/cat.png",
+        "https://cdn.example.com/wordcards/dog.png"
+      ],
+      "text": null,
+      "choices": [
+        "猫",
+        "狗",
+        "鸟",
+        "鱼"
+      ],
+      "scrambled": [],
+      "target_text": null
+    },
+    "answer": [
+      "猫"
+    ]
+  },
+  {
+    "level": "L1",
+    "type": "sentence_order",
+    "question": {
+      "mode": "text",
+      "image_urls": [],
+      "text": null,
+      "choices": [],
+      "scrambled": [
+        "我",
+        "吃",
+        "苹果"
+      ],
+      "target_text": "我吃苹果"
+    },
+    "answer": [
+      "我",
+      "吃",
+      "苹果"
+    ]
+  },
+  {
+    "level": "L1",
+    "type": "sentence_order",
+    "question": {
+      "mode": "text",
+      "image_urls": [],
+      "text": null,
+      "choices": [],
+      "scrambled": [
+        "妈妈",
+        "爱",
+        "我"
+      ],
+      "target_text": "妈妈爱我"
+    },
+    "answer": [
+      "妈妈",
+      "爱",
+      "我"
+    ]
+  },
+  {
+    "level": "L2",
+    "type": "word_match",
+    "question": {
+      "mode": "image",
+      "image_urls": [
+        "https://cdn.example.com/wordcards/school.png",
+        "https://cdn.example.com/wordcards/hospital.png"
+      ],
+      "text": null,
+      "choices": [
+        "学校",
+        "医院",
+        "公园",
+        "商店"
+      ],
+      "scrambled": [],
+      "target_text": null
+    },
+    "answer": [
+      "学校"
+    ]
+  },
+  {
+    "level": "L2",
+    "type": "sentence_order",
+    "question": {
+      "mode": "text",
+      "image_urls": [],
+      "text": null,
+      "choices": [],
+      "scrambled": [
+        "小马",
+        "驮着",
+        "麦子",
+        "去",
+        "磨坊"
+      ],
+      "target_text": "小马驮着麦子去磨坊"
+    },
+    "answer": [
+      "小马",
+      "驮着",
+      "麦子",
+      "去",
+      "磨坊"
+    ]
+  },
+  {
+    "level": "L3",
+    "type": "sign_recognize",
+    "question": {
+      "mode": "text",
+      "image_urls": [],
+      "text": "小猫跟妈妈一起去钓鱼。",
+      "choices": [],
+      "scrambled": [],
+      "target_text": "小猫钓鱼"
+    },
+    "answer": "小猫钓鱼"
+  },
+  {
+    "level": "L3",
+    "type": "sign_recognize",
+    "question": {
+      "mode": "text",
+      "image_urls": [],
+      "text": "小马驮着麦子去磨坊。",
+      "choices": [],
+      "scrambled": [],
+      "target_text": "小马过河"
+    },
+    "answer": "小马过河"
+  }
+]
