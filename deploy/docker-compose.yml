@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
   signvcb-server:
-    build: ./backend
+    build: ../backend
     container_name: signvcb-server
     ports:
       - "8012:8000"
@@ -93,7 +93,7 @@ services:
       retries: 3
 
   signvcb-engine:
-    build: ./engine
+    build: ../engine
     container_name: signvcb-engine
     environment:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}

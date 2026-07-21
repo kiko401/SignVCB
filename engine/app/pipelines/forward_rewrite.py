@@ -30,7 +30,10 @@ class ForwardRewritePipeline:
 
     def initialize(self, index_path: str, vocab_path: str, fallback_path: str, redis_service=None):
         """初始化流水线组件"""
-        self.oov_detector.load(index_path, vocab_path, fallback_path)
+        try:
+            self.oov_detector.load(index_path, vocab_path, fallback_path)
+        except Exception as e:
+            logger.warning(f"OOV detector load failed: {e}, running in degraded mode")
 
         initial_fallback = {}
         try:
