@@ -10,10 +10,11 @@ from app.core.config import get_settings
 from app.core.llm_client import close_shared_client
 from app.pipelines.forward_rewrite import forward_rewrite_pipeline
 from app.pipelines.reverse_normalize import reverse_normalize_pipeline
-from app.services.redis_service import init_redis_service, close_redis_service
+from app.services.redis_service import init_redis_service, close_redis_service, get_redis_service
 from app.services.dynamic_fallback_service import (
     DynamicFallbackService,
-    set_dynamic_fallback_service
+    set_dynamic_fallback_service,
+    get_dynamic_fallback_service
 )
 from app.api.routes import router as rewrite_router
 from app.api.health import router as health_router
@@ -34,7 +35,6 @@ async def lifespan(app: FastAPI):
 
     # 2. 初始化 rewrite 流水线
     try:
-        from app.services.redis_service import get_redis_service
         forward_rewrite_pipeline.initialize(
             index_path=settings.FAISS_INDEX_PATH,
             vocab_path=settings.VOCAB_PATH,
@@ -61,7 +61,10 @@ async def lifespan(app: FastAPI):
         await service.initial_load(initial_fallback)
         service.set_backend_url(f"http://{settings.BACKEND_HOST}:{settings.BACKEND_PORT}")
         set_dynamic_fallback_service(service)
-        asyncio.create_task(service.start_periodic_sync(settings.DYNAMIC_FALLBACK_SYNC_INTERVAL))
+
+        # 同时启动 PubSub 订阅 + 定期同步
+        redis_service = get_redis_service()
+        await service.start(redis_service, settings.DYNAMIC_FALLBACK_SYNC_INTERVAL)
     except Exception as e:
         logger.warning(f"Dynamic fallback service not initialized: {e}")
 
@@ -71,8 +74,17 @@ async def lifespan(app: FastAPI):
 
     # 关闭阶段
     logger.info("Shutting down SignVCB Engine...")
+
+    # 1. 关闭 DynamicFallbackService 后台任务
+    service = get_dynamic_fallback_service()
+    if service:
+        await service.stop()
+
+    # 2. 关闭 Redis
     await close_redis_service()
-    close_shared_client()
+
+    # 3. 关闭 DeepSeek 客户端（必须 await）
+    await close_shared_client()
 
     logger.info("SignVCB Engine stopped")
 
