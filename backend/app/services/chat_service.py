@@ -40,7 +40,7 @@ class ChatService:
         yield "preheat", {"original": ""}
 
         asr_service = ASRService()
-        text = asr_service.recognize(audio_data)
+        text = await asr_service.recognize(audio_data)
 
         yield "preheat", {"original": text}
 
