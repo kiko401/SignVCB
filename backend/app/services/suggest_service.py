@@ -9,7 +9,6 @@ logger = loguru.logger
 class SuggestService:
     """DeepSeek 建议回复服务（懒加载单例）"""
 
-    BASE_URL = "https://api.deepseek.com/v1"
     _instance: Optional["SuggestService"] = None
     _client: Optional[httpx.AsyncClient] = None
 
@@ -19,6 +18,7 @@ class SuggestService:
 
         self.api_key = api_key or settings.DEEPSEEK_API_KEY
         self.model = model or settings.DEEPSEEK_MODEL
+        self.base_url = settings.DEEPSEEK_BASE_URL
 
     @classmethod
     def get_client(cls) -> "SuggestService":
@@ -45,13 +45,27 @@ class SuggestService:
 
     async def generate_suggestions(self, text: str, context: str = None, num: int = 3) -> list[dict]:
         """生成建议回复"""
-        ctx = f"\n上下文：{context}" if context else ""
-        prompt = f"上下文：{ctx}\n用户说了：{text}\n请生成 {num} 个合适的回复建议，每个建议要简短自然。"
+        if not self.api_key:
+            logger.warning("DEEPSEEK_API_KEY not configured, returning empty suggestions")
+            return []
+
+        ctx_info = f"\n对话上下文：{context}" if context else ""
+        prompt = f"""你是一个辅助听障人士沟通的助手。用户表达了以下意思，请生成 {num} 个简短的自然中文回复建议，方便听障人士选择回复。
+
+要求：
+1. 每个回复不超过15个字
+2. 回复要自然、口语化
+3. 适合日常对话场景
+4. 只返回回复内容，每行一个，不要编号
+
+用户表达：{text}{ctx_info}
+
+建议回复："""
 
         try:
             client = self._get_httpx_client()
             resp = await client.post(
-                f"{self.BASE_URL}/chat/completions",
+                f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={
                     "model": self.model,
@@ -59,8 +73,12 @@ class SuggestService:
                 }
             )
             content = resp.json()["choices"][0]["message"]["content"]
-            return [{"text": line.strip(), "reason": ""}
-                    for line in content.split("\n") if line.strip()]
+            suggestions = [
+                {"text": line.strip(), "reason": ""}
+                for line in content.split("\n")
+                if line.strip() and not line.strip().startswith(("1", "2", "3", "-", "*", "·"))
+            ]
+            return suggestions[:num]
         except Exception as e:
             logger.error(f"SuggestService failed: {e}")
             return []

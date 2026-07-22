@@ -28,18 +28,26 @@ class ONNXEncoder:
         """加载 ONNX 模型和 tokenizer"""
         logger.info(f"Loading ONNX model from {model_path}")
         self.session = ort.InferenceSession(model_path)
+        self.tokenizer = None
 
         if vocab_path and Path(vocab_path).exists():
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                str(Path(vocab_path).parent)
-            )
-        elif Path(model_path).parent.exists():
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    str(Path(vocab_path).parent)
+                )
+            except Exception as e:
+                logger.warning(f"Tokenizer not loaded: {e}")
+
+        if self.tokenizer is None and Path(model_path).parent.exists():
             try:
                 self.tokenizer = AutoTokenizer.from_pretrained(
                     str(Path(model_path).parent)
                 )
             except Exception as e:
-                logger.warning(f"Tokenizer not loaded: {e}")
+                logger.warning(f"Tokenizer not loaded from model dir: {e}")
+
+        if self.tokenizer is None:
+            logger.error("Tokenizer failed to load — ONNX vector search will be disabled")
 
         logger.info("ONNX model loaded successfully")
 
@@ -84,4 +92,5 @@ class ONNXEncoder:
         return embeddings.astype(np.float32)
 
     def is_loaded(self) -> bool:
-        return self.session is not None
+        """必须 session 和 tokenizer 都加载成功才算完成"""
+        return self.session is not None and self.tokenizer is not None
