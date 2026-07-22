@@ -24,9 +24,7 @@ async def lifespan(app: FastAPI):
     from app.core.database import engine, redis_client
     from app.services.engine_client import EngineClient
     from app.services.suggest_service import SuggestService
-    from app.services.oov_consumer import OOVFallbackConsumer
     from sqlalchemy import text
-    from threading import Thread
     import os
 
     logger.info("Starting SignVCB Server...")
@@ -64,10 +62,10 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.TTS_AUDIO_DIR, exist_ok=True)
 
     # 5. 启动 OOV 队列消费者（daemon thread）
-    consumer = OOVFallbackConsumer()
-    t = Thread(target=lambda: consumer.run_sync(), daemon=True)
-    t.start()
-    logger.info("OOVFallbackConsumer started in background thread")
+    # consumer = OOVFallbackConsumer()
+    # t = Thread(target=lambda: consumer.run_sync(), daemon=True)
+    # t.start()
+    # logger.info("OOVFallbackConsumer started in background thread")
 
     yield
 
@@ -75,7 +73,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down SignVCB Server...")
 
     # 1. 停止 OOV 消费者
-    await consumer.stop()
+    # await consumer.stop()
 
     # 2. 关闭 SuggestService
     try:

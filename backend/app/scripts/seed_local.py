@@ -18,7 +18,7 @@ import aiomysql
 
 
 async def get_pool():
-    host = os.getenv("MYSQL_HOST", "localhost")
+    host = os.getenv("MYSQL_HOST", "signvcb-mysql")
     port = int(os.getenv("MYSQL_PORT", "3306"))
     user = os.getenv("MYSQL_USER", "signvcb")
     password = os.getenv("MYSQL_PASSWORD", "signvcb123")
@@ -32,7 +32,12 @@ async def get_pool():
 
 async def seed_reading(pool):
     """写入读物数据"""
-    deploy_dir = Path(__file__).parent.parent.parent.parent / "deploy" / "init_data"
+    # 支持环境变量指定数据目录，容器内用 /app/deploy/init_data，本地开发用相对路径
+    seed_data_dir = os.getenv("SEED_DATA_DIR")
+    if seed_data_dir:
+        deploy_dir = Path(seed_data_dir)
+    else:
+        deploy_dir = Path(__file__).parent.parent.parent.parent / "deploy" / "init_data"
     books_path = deploy_dir / "reading_books.json"
     sentences_path = deploy_dir / "reading_sentences.json"
 
@@ -68,7 +73,11 @@ async def seed_reading(pool):
 
 async def seed_practice(pool):
     """写入练习题数据"""
-    deploy_dir = Path(__file__).parent.parent.parent.parent / "deploy" / "init_data"
+    seed_data_dir = os.getenv("SEED_DATA_DIR")
+    if seed_data_dir:
+        deploy_dir = Path(seed_data_dir)
+    else:
+        deploy_dir = Path(__file__).parent.parent.parent.parent / "deploy" / "init_data"
     questions_path = deploy_dir / "practice_questions.json"
 
     if not questions_path.exists():

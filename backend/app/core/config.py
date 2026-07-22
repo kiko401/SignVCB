@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     # Tencent ASR
     TENCENT_ASR_SECRET_ID: str = ""
     TENCENT_ASR_SECRET_KEY: str = ""
+    TENCENT_TTS_SECRET_ID: str = ""
+    TENCENT_TTS_SECRET_KEY: str = ""
 
     # MiniMax TTS
     MINIMAX_API_KEY: str = ""

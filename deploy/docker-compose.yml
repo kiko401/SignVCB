@@ -45,32 +45,37 @@ services:
     container_name: signvcb-server
     ports:
       - "8012:8000"
+      - "8081:8000"
     environment:
-      - MYSQL_HOST=signvcb-mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - REDIS_HOST=signvcb-redis
-      - REDIS_PORT=6379
-      - ALGORITHM_ENGINE_URL=http://signvcb-engine:8001
-      - ENGINE_HOST=signvcb-engine
-      - ENGINE_PORT=8001
-      - ENGINE_TIMEOUT=10.0
-      - ENGINE_CONNECT_TIMEOUT=2.0
-      - JWT_SECRET=${JWT_SECRET}
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL}
-      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL}
-      - TENCENT_ASR_SECRET_ID=${TENCENT_ASR_SECRET_ID}
-      - TENCENT_ASR_SECRET_KEY=${TENCENT_ASR_SECRET_KEY}
-      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
-      - MINIMAX_GROUP_ID=${MINIMAX_GROUP_ID}
-      - ENABLE_STREAM_MASKING=${ENABLE_STREAM_MASKING}
-      - SHOW_OOV_MAP=${SHOW_OOV_MAP}
-      - SHOW_NMM_HINTS=${SHOW_NMM_HINTS}
-      - SSE_TIMEOUT_MS=${SSE_TIMEOUT_MS}
-      - SERVER_PUBLIC_HOST=${SERVER_PUBLIC_HOST}
+      MYSQL_HOST: signvcb-mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      REDIS_HOST: signvcb-redis
+      REDIS_PORT: 6379
+      ALGORITHM_ENGINE_URL: http://signvcb-engine:8001
+      ENGINE_HOST: signvcb-engine
+      ENGINE_PORT: 8001
+      ENGINE_TIMEOUT: 10.0
+      ENGINE_CONNECT_TIMEOUT: 2.0
+      JWT_SECRET: ${JWT_SECRET}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
+      TENCENT_ASR_SECRET_ID: ${TENCENT_ASR_SECRET_ID}
+      TENCENT_ASR_SECRET_KEY: ${TENCENT_ASR_SECRET_KEY}
+      TENCENT_TTS_SECRET_ID: ${TENCENT_TTS_SECRET_ID}
+      TENCENT_TTS_SECRET_KEY: ${TENCENT_TTS_SECRET_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      MINIMAX_GROUP_ID: ${MINIMAX_GROUP_ID}
+      ENABLE_STREAM_MASKING: ${ENABLE_STREAM_MASKING}
+      SHOW_OOV_MAP: ${SHOW_OOV_MAP}
+      SHOW_NMM_HINTS: ${SHOW_NMM_HINTS}
+      SSE_TIMEOUT_MS: ${SSE_TIMEOUT_MS}
+      SERVER_PUBLIC_HOST: ${SERVER_PUBLIC_HOST}
+      SEED_DATA_DIR: /app/deploy/init_data
+      TTS_AUDIO_DIR: /data/tts_audio
     depends_on:
       signvcb-mysql:
         condition: service_healthy
@@ -79,6 +84,7 @@ services:
       signvcb-engine:
         condition: service_started
     volumes:
+      - ../deploy/init_data:/app/deploy/init_data:ro
       - tts_audio:/data/tts_audio
       - server_logs:/data/logs
     mem_limit: 384m
@@ -110,6 +116,10 @@ services:
       - TORCH_NUM_THREADS=2
       - OOV_SIMILARITY_THRESHOLD=0.8
       - DYNAMIC_FALLBACK_SYNC_INTERVAL=600
+      - MODEL_PATH=/app/models/csl_encoder.onnx
+      - FAISS_INDEX_PATH=/app/data/faiss/faiss_index.bin
+      - VOCAB_PATH=/app/data/vocab.json
+      - INITIAL_FALLBACK_PATH=/app/data/fallback/initial_fallback.json
     volumes:
       - engine_models:/app/models
       - engine_data:/app/data
@@ -118,6 +128,8 @@ services:
     cpus: '1.5'
     networks:
       - signvcb-net
+    ports:
+      - "8001:8001"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]

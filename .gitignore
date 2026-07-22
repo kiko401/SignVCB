@@ -57,6 +57,9 @@ htmlcov/
 .coverage
 .pytest_cache/
 
+# Tests (local only)
+tests/
+
 # Docker
 docker-compose.override.yml
 .claude/
