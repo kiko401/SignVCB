@@ -10,8 +10,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
+COPY scripts/ ./scripts/
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
-RUN mkdir -p /app/models /app/data /data/logs
+RUN mkdir -p /app/models /app/data /data/logs && \
+    chmod +x /app/docker-entrypoint.sh /app/scripts/init_data.sh
 
 ENV OMP_NUM_THREADS=2
 ENV TORCH_NUM_THREADS=2
@@ -21,4 +24,4 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 
 EXPOSE 8001
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

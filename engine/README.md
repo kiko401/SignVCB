@@ -52,7 +52,26 @@ uvicorn app.main:app --host 0.0.0.0 --port 8001
 ## Docker 运行
 
 ```bash
-docker compose up --build signvcb-engine
+# 首次部署：注入模型文件到 Docker volumes
+docker compose up -d signvcb-engine  # 先启动以创建 volumes
+
+# 注入 ONNX 模型
+docker cp Offline-Tools/outputs/onnx/csl_encoder.onnx signvcb-engine:/app/models/csl_encoder.onnx
+
+# 注入 FAISS 索引
+docker cp Offline-Tools/outputs/faiss/faiss_index.bin signvcb-engine:/app/data/faiss/faiss_index.bin
+
+# 注入词表
+docker cp Offline-Tools/outputs/data/csl_standard_vocab.json signvcb-engine:/app/data/vocab.json
+
+# 注入初始降级词典
+docker cp Offline-Tools/outputs/fallback/initial_fallback.json signvcb-engine:/app/data/fallback/initial_fallback.json
+
+# 重启使模型生效
+docker compose restart signvcb-engine
+
+# 验证模型加载
+docker compose exec signvcb-engine /app/scripts/init_data.sh
 ```
 
 ## 接口
