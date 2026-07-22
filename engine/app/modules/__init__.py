@@ -1,9 +1,4 @@
-"""Modules 模块"""
-from app.modules.oov_detector import OOVDetector
-from app.modules.fallback_resolver import FallbackResolver
-from app.modules.llm_refiner import LLMRefiner
-from app.modules.alignment_generator import AlignmentGenerator
-from app.modules.nmm_generator import NMMGenerator
+"""Modules 模块（延迟导入，避免 jieba 等可选依赖强绑定）"""
 
 __all__ = [
     "OOVDetector",
