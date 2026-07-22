@@ -14,15 +14,15 @@ class PracticeService:
     async def get_random_question(
         session: AsyncSession,
         level: str = None,
-        q_type: str = None
+        type: str = None
     ) -> Optional[PracticeQuestionResponse]:
         """获取随机练习题"""
         stmt = select(PracticeQuestion)
 
         if level:
             stmt = stmt.where(PracticeQuestion.level == level)
-        if q_type:
-            stmt = stmt.where(PracticeQuestion.type == q_type)
+        if type:
+            stmt = stmt.where(PracticeQuestion.type == type)
 
         stmt = stmt.order_by(func.rand()).limit(1)
 
@@ -64,7 +64,7 @@ class PracticeService:
         correct_answer = json.loads(q.answer) if q.answer else []
 
         if isinstance(answer, list):
-            correct = answer == correct_answer
+            correct = sorted(answer) == sorted(correct_answer)
         else:
             correct = answer == correct_answer
 
