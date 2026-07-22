@@ -91,7 +91,7 @@ curl -fsS -X POST "$BASE/api/v1/practice/validate" \
   -d '{"question_id":1,"answer":["苹果"]}' | python -m json.tool
 echo ""
 
-echo "[14/14] 401 拦截验证"
+echo "[14/15] 401 拦截验证"
 HTTP_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" "$BASE/api/v1/reading/books")
 echo "无 token 时返回 HTTP $HTTP_CODE (期望 401)"
 echo ""
