@@ -54,6 +54,8 @@ class ForwardRewritePipeline:
             yield "error", {"message": "Pipeline not initialized"}
             return
 
+        yield "preheat", {"original": text}
+
         first_pass_text, oov_status, oov_words = self.oov_detector.detect(text)
 
         yield "first_pass", {"text": first_pass_text, "oov_status": oov_status}
