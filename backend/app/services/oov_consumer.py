@@ -64,7 +64,8 @@ class OOVFallbackConsumer:
 
                 await session.commit()
 
-            await self.redis_client.publish("pubsub:dynamic_fallback_updated", message)
+            pubsub_msg = json.dumps({"oov": oov_word, "fallback": fallback_word}, ensure_ascii=False)
+            await self.redis_client.publish("pubsub:dynamic_fallback_updated", pubsub_msg)
 
         except Exception as e:
             logger.error(f"Failed to process OOV message: {e}")
