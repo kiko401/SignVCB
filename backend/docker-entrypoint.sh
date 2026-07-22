@@ -2,7 +2,7 @@
 set -e
 
 echo "[entrypoint] Waiting for MySQL to be ready..."
-until mysql -h"${MYSQL_HOST}" -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${MYSQL_DATABASE}" -e "SELECT 1" &>/dev/null; do
+until mysql -h"${MYSQL_HOST}" -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${MYSQL_DATABASE}" --skip-ssl -e "SELECT 1" &>/dev/null; do
     echo "[entrypoint] MySQL not ready, waiting 2s..."
     sleep 2
 done

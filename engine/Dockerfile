@@ -14,7 +14,8 @@ COPY scripts/ ./scripts/
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
 RUN mkdir -p /app/models /app/data /data/logs && \
-    chmod +x /app/docker-entrypoint.sh /app/scripts/init_data.sh
+    chmod +x /app/docker-entrypoint.sh /app/scripts/init_data.sh && \
+    sed -i 's/\r$//' /app/docker-entrypoint.sh /app/scripts/init_data.sh
 
 ENV OMP_NUM_THREADS=2
 ENV TORCH_NUM_THREADS=2
