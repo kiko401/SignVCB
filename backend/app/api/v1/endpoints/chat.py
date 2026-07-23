@@ -25,7 +25,11 @@ router = APIRouter()
 @router.post("/rewrite")
 @limiter.limit("30/minute")
 async def rewrite(request: Request, req: RewriteRequest):
-    """流式 rewrite"""
+    """流式 rewrite
+
+    注意：EngineTimeoutError 在 ChatService.stream_rewrite 内部已处理，
+    此处无需额外 try/except。
+    """
     request_id = request.headers.get("X-Request-ID", "")
 
     async def event_generator():
@@ -37,10 +41,14 @@ async def rewrite(request: Request, req: RewriteRequest):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@router.post("/asr_rewrite")
+@router.post("/asr_and_rewrite")
 @limiter.limit("15/minute")
 async def asr_rewrite(request: Request, req: AsrAndRewriteRequest):
-    """ASR + rewrite"""
+    """ASR + rewrite
+
+    注意：EngineTimeoutError 在 ChatService.stream_rewrite 内部已处理，
+    此处无需额外 try/except。
+    """
     request_id = request.headers.get("X-Request-ID", "")
 
     async def event_generator():
@@ -60,7 +68,7 @@ async def tts(request: Request, req: TtsRequest):
     return TtsResponse(audio_url=audio_url)
 
 
-@router.post("/suggest", response_model=SuggestReplyResponse)
+@router.post("/suggest_reply", response_model=SuggestReplyResponse)
 @limiter.limit("30/minute")
 async def suggest(request: Request, req: SuggestReplyRequest):
     """建议回复"""
@@ -68,7 +76,7 @@ async def suggest(request: Request, req: SuggestReplyRequest):
     return SuggestReplyResponse(suggestions=suggestions)
 
 
-@router.post("/normalize", response_model=NormalizeOptionsResponse)
+@router.post("/normalize_options", response_model=NormalizeOptionsResponse)
 @limiter.limit("30/minute")
 async def normalize(request: Request, req: NormalizeOptionsRequest):
     """逆向归一化"""

@@ -57,7 +57,7 @@ class AlignmentGenerator:
             else:
                 if orig_idx < len(orig_words):
                     for w in orig_words[orig_idx:]:
-                        ops.append(AlignmentOp(type=AlignmentOpType.DELETE, word=w))
+                        ops.append(AlignmentOp(type=AlignmentOpType.DELETE, word=w, position=orig_idx))
                     break
                 if refined_idx < len(refined_words):
                     for w in refined_words[refined_idx:]:

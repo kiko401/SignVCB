@@ -38,6 +38,11 @@ class ValidationError(AppException):
         super().__init__(400, detail, "VALIDATION_ERROR")
 
 
+class NotFoundError(AppException):
+    def __init__(self, detail: str = "Resource not found"):
+        super().__init__(404, detail, "NOT_FOUND")
+
+
 class InternalError(AppException):
     def __init__(self, detail: str = "Internal server error"):
         super().__init__(500, detail, "INTERNAL_ERROR")
@@ -47,8 +52,29 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": exc.error_code,
-            "detail": exc.detail,
+            "code": exc.error_code,
+            "message": exc.detail,
+            "request_id": request.headers.get("X-Request-ID", ""),
+        },
+    )
+
+
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """处理 FastAPI 原生 HTTPException，确保格式统一为 {code, message, request_id}"""
+    code_map = {
+        400: "VALIDATION_ERROR",
+        401: "AUTH_INVALID",
+        403: "FORBIDDEN",
+        404: "NOT_FOUND",
+        422: "VALIDATION_ERROR",
+        429: "RATE_LIMITED",
+        500: "INTERNAL_ERROR",
+    }
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": code_map.get(exc.status_code, "UNKNOWN_ERROR"),
+            "message": exc.detail,
             "request_id": request.headers.get("X-Request-ID", ""),
         },
     )
@@ -58,8 +84,8 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     return JSONResponse(
         status_code=500,
         content={
-            "error": "INTERNAL_ERROR",
-            "detail": "An unexpected error occurred",
+            "code": "INTERNAL_ERROR",
+            "message": "An unexpected error occurred",
             "request_id": request.headers.get("X-Request-ID", ""),
         },
     )
@@ -67,4 +93,5 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
 
 def register_exception_handlers(app):
     app.add_exception_handler(AppException, app_exception_handler)
+    app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)

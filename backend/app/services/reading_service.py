@@ -7,7 +7,7 @@ from app.models.reading import ReadingBook, ReadingSentence
 from app.schemas.reading import (
     ReadingBookResponse,
     ReadingContentResponse,
-    ReadingSentenceResponse
+    ReadingSentenceResponse,
 )
 from app.schemas.alignment import AlignmentOp
 
@@ -53,14 +53,22 @@ class ReadingService:
         )
         sentences = result.scalars().all()
 
-        sentence_responses = [
-            ReadingSentenceResponse(
+        sentence_responses = []
+        for s in sentences:
+            alignment_ops: List[AlignmentOp] = []
+            if s.alignment_ops:
+                try:
+                    ops_data = json.loads(s.alignment_ops)
+                    alignment_ops = [AlignmentOp.model_validate(op) for op in ops_data]
+                except (json.JSONDecodeError, ValueError):
+                    # 数据库中 alignment_ops 损坏时优雅降级，返回空列表
+                    alignment_ops = []
+
+            sentence_responses.append(ReadingSentenceResponse(
                 index=s.sentence_index,
                 original=s.original_text,
                 sign_text=s.sign_text,
-                alignment_ops=json.loads(s.alignment_ops) if s.alignment_ops else []
-            )
-            for s in sentences
-        ]
+                alignment_ops=alignment_ops,
+            ))
 
         return ReadingContentResponse(book_id=book.id, sentences=sentence_responses)

@@ -1,27 +1,9 @@
-"""聊天相关 Schema"""
+"""聊天相关 Schema（API 请求与响应）"""
 from typing import Optional
 from pydantic import BaseModel
 
 
-class PreheatData(BaseModel):
-    original: str = ""
-
-
-class FirstPassData(BaseModel):
-    text: str
-    oov_status: bool
-
-
-class RefinedPassData(BaseModel):
-    text: str
-    oov_map: dict[str, str]
-    nmm_hints: dict[str, str]
-    alignment_ops: list
-
-
-class FallbackData(BaseModel):
-    fallback_text: str
-
+# ─── 请求 ───────────────────────────────────────────────────
 
 class RewriteRequest(BaseModel):
     text: str
@@ -38,13 +20,26 @@ class TtsRequest(BaseModel):
     speed: float = 1.0
 
 
-class TtsResponse(BaseModel):
-    audio_url: str
-
-
 class SuggestReplyRequest(BaseModel):
     text: str
     context: Optional[str] = None
+
+
+class NormalizeOptionsRequest(BaseModel):
+    text: str
+    num_options: int = 3
+
+
+class LogMismatchRequest(BaseModel):
+    original_text: str
+    failed_options: list[str]
+    context: Optional[str] = None
+
+
+# ─── 响应 ───────────────────────────────────────────────────
+
+class TtsResponse(BaseModel):
+    audio_url: str
 
 
 class SuggestionItem(BaseModel):
@@ -56,16 +51,5 @@ class SuggestReplyResponse(BaseModel):
     suggestions: list[SuggestionItem]
 
 
-class NormalizeOptionsRequest(BaseModel):
-    text: str
-    num_options: int = 3
-
-
 class NormalizeOptionsResponse(BaseModel):
     options: list[str]
-
-
-class LogMismatchRequest(BaseModel):
-    original_text: str
-    failed_options: list[str]
-    context: Optional[str] = None

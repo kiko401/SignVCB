@@ -3,8 +3,8 @@ from pydantic import BaseModel
 
 
 class ErrorResponse(BaseModel):
-    error: str
-    detail: str
+    code: str
+    message: str
     request_id: str = ""
 
 

@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.models.practice import PracticeRecord
 from app.schemas.practice import PracticeQuestionResponse, PracticeValidateRequest, PracticeValidateResponse
 from app.services.practice_service import PracticeService
 from app.core.rate_limit import limiter
@@ -37,9 +38,19 @@ async def validate_answer(
     session: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """验证答案"""
+    """验证答案并记录答题结果"""
     correct, _ = await PracticeService.validate_answer(
         session, req.question_id, req.answer
     )
+
+    # 持久化答题记录
+    record = PracticeRecord(
+        user_id=current_user.id,
+        question_id=req.question_id,
+        correct=correct,
+    )
+    session.add(record)
+    await session.commit()
+
     feedback = "答对了！真棒！" if correct else "再想想哦，可以看看下面的提示～"
     return PracticeValidateResponse(correct=correct, feedback=feedback)

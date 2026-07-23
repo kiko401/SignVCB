@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+import asyncio
 import loguru
 
 from app.core.config import get_settings
@@ -18,12 +19,18 @@ from app.api.internal import router as internal_router
 init_logging()
 logger = loguru.logger
 
+# 全局 OOV 消费者引用（供 lifespan 管理生命周期）
+_oov_consumer = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _oov_consumer
+
     from app.core.database import engine, redis_client
     from app.services.engine_client import EngineClient
     from app.services.suggest_service import SuggestService
+    from app.services.oov_consumer import OOVFallbackConsumer
     from sqlalchemy import text
     import os
 
@@ -61,11 +68,12 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     os.makedirs(settings.TTS_AUDIO_DIR, exist_ok=True)
 
-    # 5. 启动 OOV 队列消费者（daemon thread）
-    # consumer = OOVFallbackConsumer()
-    # t = Thread(target=lambda: consumer.run_sync(), daemon=True)
-    # t.start()
-    # logger.info("OOVFallbackConsumer started in background thread")
+    # 5. 启动 OOV 队列消费者（asyncio 后台任务）
+    #    引擎 rewrite 流水线将 OOV 词推入 Redis 队列，
+    #    此消费者取出后写入 MySQL 并通过 PubSub 通知引擎实时更新本地词典。
+    _oov_consumer = OOVFallbackConsumer()
+    consumer_task = asyncio.create_task(_oov_consumer.start())
+    logger.info("OOVFallbackConsumer started in background")
 
     yield
 
@@ -73,7 +81,14 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down SignVCB Server...")
 
     # 1. 停止 OOV 消费者
-    # await consumer.stop()
+    if _oov_consumer:
+        await _oov_consumer.stop()
+        consumer_task.cancel()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("OOVFallbackConsumer stopped")
 
     # 2. 关闭 SuggestService
     try:

@@ -1,5 +1,6 @@
 """建议回复服务（DeepSeek）"""
 import httpx
+import threading
 from typing import Optional
 import loguru
 
@@ -7,10 +8,11 @@ logger = loguru.logger
 
 
 class SuggestService:
-    """DeepSeek 建议回复服务（懒加载单例）"""
+    """DeepSeek 建议回复服务（懒加载单例，线程安全）"""
 
     _instance: Optional["SuggestService"] = None
     _client: Optional[httpx.AsyncClient] = None
+    _lock: threading.Lock = threading.Lock()
 
     def __init__(self, api_key: str = None, model: str = None):
         from app.core.config import get_settings
@@ -23,7 +25,9 @@ class SuggestService:
     @classmethod
     def get_client(cls) -> "SuggestService":
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
     @classmethod
@@ -35,12 +39,14 @@ class SuggestService:
             cls._instance = None
 
     def _get_httpx_client(self) -> httpx.AsyncClient:
-        """懒加载共享 httpx 客户端"""
+        """懒加载共享 httpx 客户端（线程安全）"""
         if SuggestService._client is None or SuggestService._client.is_closed:
-            SuggestService._client = httpx.AsyncClient(
-                timeout=httpx.Timeout(30.0),
-                limits=httpx.Limits(max_connections=5, max_keepalive_connections=2),
-            )
+            with SuggestService._lock:
+                if SuggestService._client is None or SuggestService._client.is_closed:
+                    SuggestService._client = httpx.AsyncClient(
+                        timeout=httpx.Timeout(30.0),
+                        limits=httpx.Limits(max_connections=5, max_keepalive_connections=2),
+                    )
         return SuggestService._client
 
     async def generate_suggestions(self, text: str, context: str = None, num: int = 3) -> list[dict]:

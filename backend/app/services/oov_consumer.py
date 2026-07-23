@@ -32,6 +32,9 @@ class OOVFallbackConsumer:
                 if result:
                     _, message = result
                     await self._process_message(message)
+            except asyncio.CancelledError:
+                # 收到取消信号，安全退出循环
+                break
             except Exception as e:
                 logger.error(f"OOV consumer error: {e}")
                 await asyncio.sleep(1)

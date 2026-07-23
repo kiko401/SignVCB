@@ -5,6 +5,7 @@ from app.schemas.alignment import AlignmentOp
 
 
 class ReadingBookResponse(BaseModel):
+    """单个书籍响应"""
     id: int
     title: str
     age_group: str
@@ -13,16 +14,14 @@ class ReadingBookResponse(BaseModel):
 
 
 class ReadingSentenceResponse(BaseModel):
+    """阅读句子响应"""
     index: int
     original: str
     sign_text: str
     alignment_ops: List[AlignmentOp]
 
 
-class ReadingBooksResponse(BaseModel):
-    books: List[ReadingBookResponse]
-
-
 class ReadingContentResponse(BaseModel):
+    """阅读内容响应"""
     book_id: int
     sentences: List[ReadingSentenceResponse]

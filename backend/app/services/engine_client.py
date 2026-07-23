@@ -1,6 +1,7 @@
 """算法引擎客户端"""
 import httpx
 import json
+import threading
 from typing import AsyncGenerator, Optional
 import loguru
 
@@ -13,10 +14,11 @@ class EngineTimeoutError(Exception):
 
 
 class EngineClient:
-    """算法引擎 HTTP 客户端（懒加载单例）"""
+    """算法引擎 HTTP 客户端（懒加载单例，线程安全）"""
 
     _instance: Optional["EngineClient"] = None
     _client: Optional[httpx.AsyncClient] = None
+    _lock: threading.Lock = threading.Lock()
 
     def __init__(self, base_url: str = None, timeout: float = None):
         from app.core.config import get_settings
@@ -27,18 +29,24 @@ class EngineClient:
     @classmethod
     def get_instance(cls) -> "EngineClient":
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._lock:
+                # 双重检查锁定（Double-Checked Locking）
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
     @classmethod
     def get_client(cls) -> httpx.AsyncClient:
         """懒加载共享 httpx 客户端"""
         if cls._client is None or cls._client.is_closed:
-            cls._client = httpx.AsyncClient(
-                timeout=httpx.Timeout(cls._instance.timeout if cls._instance else 10.0),
-                follow_redirects=True,
-                limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
-            )
+            with cls._lock:
+                if cls._client is None or cls._client.is_closed:
+                    timeout = cls._instance.timeout if cls._instance else 10.0
+                    cls._client = httpx.AsyncClient(
+                        timeout=httpx.Timeout(timeout),
+                        follow_redirects=True,
+                        limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
+                    )
         return cls._client
 
     @classmethod
