@@ -16,6 +16,7 @@ class AlignmentOp(BaseModel):
     word: str
     target: Optional[str] = None
     position: Optional[int] = None
+    source: Optional[int] = None  # 仅 POSTPONE 时有
 
     @field_validator('type', mode='before')
     @classmethod

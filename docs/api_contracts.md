@@ -5,16 +5,16 @@
 > 2. `/api/v1/app_config` 是**匿名公共接口**，严禁依赖 JWT
 > 3. `first_pass` 事件**始终**由算法 yield、后端透传、前端按 `ENABLE_STREAM_MASKING` 决定是否加脉冲动画
 > 4. `refined_pass.oov_map` 严格 `{原词: 降级词}` 格式
-> 5. `refined_pass.nmm_hints` 值为字符串枚举 `NEGATION/QUESTION/PAUSE`
+> 5. `refined_pass.nmm_hints` 值为字符串枚举 `NEGATION/QUESTION/PAUSE`，key 为词在 CSL 序列中的字符串索引
 > 6. `refined_pass.alignment_ops` 元素严格 `{type, word, target?, position?, source?}`，其中 `source` 仅 POSTPONE 操作有
 > 7. `/api/v1/tts` 返回的 `audio_url` 必须是**绝对路径**
-> 8. `/api/v1/practice/validate` 接受 `user_answer`，L1/L2 传有序数组、L3 传纯文本
+> 8. `/api/v1/practice/validate` 接受 `answer`，L1/L2 传有序数组、L3 传纯文本
 > 9. `/api/v1/log_mismatch` 接收 `{original_text, failed_options: List[str], context?}`
 > 10. SSE 流正常结束时引擎发送 `done` 事件；发生未捕获异常时发送 `error` 事件
 
 ---
 
-## 一、对外 HTTP 接口（13个）
+## 一、对外 HTTP 接口（14个）
 
 ### 1.1 认证接口
 
@@ -28,7 +28,7 @@
   "username": "string",
   "password": "string",
   "age_group": "L1|L2|L3",
-  "nickname": "string"
+  "nickname": "string|null"
 }
 ```
 
@@ -41,7 +41,7 @@
     "id": 1,
     "username": "string",
     "age_group": "L1",
-    "nickname": "string",
+    "nickname": "string|null",
     "avatar_url": "string|null"
   }
 }
@@ -70,7 +70,7 @@
     "id": 1,
     "username": "string",
     "age_group": "L1",
-    "nickname": "string",
+    "nickname": "string|null",
     "avatar_url": "string|null"
   }
 }
@@ -92,7 +92,10 @@
 **SSE 事件流**：
 ```
 event: preheat
-data: {"original": "string"}
+data: {"original": ""}
+
+event: preheat
+data: {"original": "识别出的文字"}
 
 event: first_pass
 data: {"text": "string", "oov_status": boolean}
@@ -103,13 +106,15 @@ data: {
   "oov_map": {"原词": "降级词"},
   "nmm_hints": {"词索引": "NEGATION|QUESTION|PAUSE"},
   "alignment_ops": [
-    {"type": "postpone|advance|delete|insert", "word": "string", "target": "string|null", "position": number|null}
+    {"type": "postpone|advance|delete|insert", "word": "string", "target": "string|null", "position": number|null, "source": number|null}
   ]
 }
 
-event: fallback (仅超时/异常时)
-data: {"fallback_text": "string"}
+event: done
+data: {}
 ```
+
+> 注意：ASR 识别前有一个 `preheat`（original为空），识别后有第二个 `preheat`（original为识别结果）。
 
 ---
 
@@ -126,7 +131,7 @@ data: {"fallback_text": "string"}
 }
 ```
 
-**SSE 事件流**：同 asr_and_rewrite
+**SSE 事件流**：同 asr_and_rewrite（无 ASR 阶段，直接一个 preheat）
 
 ---
 
@@ -145,7 +150,7 @@ data: {"fallback_text": "string"}
 **响应 200**：
 ```json
 {
-  "audio_url": "http://<SERVER_PUBLIC_HOST>/tts_audio/xxx.mp3"
+  "audio_url": "http://<SERVER_PUBLIC_HOST>/tts_audio/xxx.wav"
 }
 ```
 
@@ -166,7 +171,11 @@ data: {"fallback_text": "string"}
 **响应 200**：
 ```json
 {
-  "suggestions": ["候选1", "候选2", "候选3"]
+  "suggestions": [
+    {"text": "候选1", "reason": ""},
+    {"text": "候选2", "reason": ""},
+    {"text": "候选3", "reason": ""}
+  ]
 }
 ```
 
@@ -179,11 +188,12 @@ data: {"fallback_text": "string"}
 **请求**：
 ```json
 {
-  "text": "string",
-  "context": "string|null",
+  "text": "CSL文本，如 苹果 我 吃",
   "num_options": 3
 }
 ```
+
+> 注意：请求体中无 `context` 字段。
 
 **响应 200**：
 ```json
@@ -231,7 +241,7 @@ data: {"fallback_text": "string"}
     "id": 1,
     "title": "string",
     "age_group": "L1",
-    "cover_url": "string",
+    "cover_url": "string|null",
     "difficulty": 1
   }
 ]
@@ -239,11 +249,11 @@ data: {"fallback_text": "string"}
 
 ---
 
-#### GET /api/v1/reading/content
+#### GET /api/v1/reading/books/{book_id}/content
 **鉴权**：是
 **限流**：60/minute
 
-**查询参数**：`book_id` (必填)
+**路径参数**：`book_id` (必填，int)
 
 **响应 200**：
 ```json
@@ -254,7 +264,9 @@ data: {"fallback_text": "string"}
       "index": 0,
       "original": "原文",
       "sign_text": "手语文本",
-      "alignment_ops": []
+      "alignment_ops": [
+        {"type": "postpone", "word": "吃", "target": "苹果", "position": 2, "source": 1}
+      ]
     }
   ]
 }
@@ -286,6 +298,13 @@ data: {"fallback_text": "string"}
   "target_text": "string|null"
 }
 ```
+
+**不同 type 的字段填充规则**：
+| type | mode | image_urls | text | choices | scrambled | target_text |
+|---|---|---|---|---|---|---|
+| word_match | image/text | 有图片时填充 | 可选 | 4个选项 | [] | null |
+| sentence_order | null | [] | null | [] | 有 | null |
+| sign_recognize | null | [] | null | 3个选项 | [] | 有 |
 
 ---
 
@@ -337,7 +356,27 @@ data: {"fallback_text": "string"}
 
 ---
 
-## 二、内部 HTTP 接口（3个）
+### 1.6 健康检查
+
+#### GET /health（Backend）
+**鉴权**：否
+**网络**：外部可访问
+
+**响应 200**：
+```json
+{
+  "status": "healthy|degraded",
+  "dependencies": {
+    "mysql": "ok|error",
+    "redis": "ok|error",
+    "engine": "ok|error"
+  }
+}
+```
+
+---
+
+## 二、内部 HTTP 接口（4个）
 
 > **注意**：这些接口只能通过 Docker 内部网络访问，前端无法直接调用。
 
@@ -364,11 +403,12 @@ data: {"fallback_text": "string"}
 **请求**：
 ```json
 {
-  "text": "string",
-  "context": "string|null",
+  "text": "CSL文本",
   "num_options": 3
 }
 ```
+
+> 注意：请求体中无 `context` 字段。
 
 **响应**：
 ```json
@@ -383,8 +423,6 @@ data: {"fallback_text": "string"}
 **网络隔离**：仅 signvcb-server → signvcb-engine
 **鉴权**：网络隔离
 
-**查询参数**：`since` (可选，ISO8601时间戳)
-
 **响应**：
 ```json
 {
@@ -398,8 +436,8 @@ data: {"fallback_text": "string"}
 
 ---
 
-### 2.4 GET /health
-**网络隔离**：无限制（可从外部访问）
+### 2.4 GET /health（Engine）
+**网络**：无限制（外部可访问）
 **鉴权**：无
 
 **响应**：
@@ -439,7 +477,7 @@ data: {"fallback_text": "string"}
 **data 字段**：
 ```json
 {
-  "text": "分词后的CSL文本（空格分隔）",
+  "text": "分词后的CSL文本(空格分隔)",
   "oov_status": true|false
 }
 ```
@@ -451,7 +489,7 @@ data: {"fallback_text": "string"}
 {
   "text": "精炼后的CSL文本",
   "oov_map": {"原词": "降级词"},
-  "nmm_hints": {"词索引": "NEGATION|QUESTION|PAUSE"},
+  "nmm_hints": {"词索引字符串": "NEGATION|QUESTION|PAUSE"},
   "alignment_ops": [
     {
       "type": "postpone|advance|delete|insert",
@@ -464,9 +502,10 @@ data: {"fallback_text": "string"}
 }
 ```
 
-> `position`：词在原始（first_pass）序列中的索引位置。DELETE/INSERT 时表示被操作词的位置；POSTPONE 时表示被移动的词在原始序列中的位置。
-> `source`：仅 POSTPONE 操作有，表示被移动的词在原始（first_pass）序列中的索引位置（与 `position` 相等但语义不同，用于前端还原移动路径）。
-> `target`：仅 POSTPONE 操作有，表示目标位置对应的词（即 refined 中该位置原有的词）。
+> - `nmm_hints`：key 为词在 CSL 序列中的**字符串索引**（如 `"3"`），value 为枚举字符串
+> - `position`：词在原始（first_pass）序列中的索引位置。DELETE/INSERT 时表示被操作词的位置；POSTPONE 时表示被移动的词在原始序列中的位置。
+> - `source`：仅 POSTPONE 操作有，表示被移动的词在原始（first_pass）序列中的索引位置（与 `position` 相等但语义不同，用于前端还原移动路径）。
+> - `target`：仅 POSTPONE 操作有，表示目标位置对应的词（即 refined 中该位置原有的词）。
 
 ### 3.4 fallback
 **触发时机**：LLM 精炼失败或超时时
