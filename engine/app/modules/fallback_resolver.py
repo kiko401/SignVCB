@@ -22,24 +22,30 @@ class FallbackResolver:
     def __init__(self, oov_detector, initial_fallback: Dict[str, str] = None):
         self.oov_detector = oov_detector
         self.initial_fallback = initial_fallback or {}
-        self.dynamic_fallback = {}
+
+    # FAISS 相似度最低阈值，低于此值不采用相似词结果
+    _FAISS_MIN_SIMILARITY: float = 0.6
 
     def resolve(self, word: str) -> str:
         """解析 OOV 词的降级词（四级降级策略）"""
-        # 第1级：初始降级词典
+        # 第1级：初始降级词典（最高优先级）
         if word in self.initial_fallback:
             return self.initial_fallback[word]
 
-        # 第2级：动态降级词典（Redis PubSub 实时更新）
-        if word in self.dynamic_fallback:
-            return self.dynamic_fallback[word]
+        # 第2级：动态降级词典（Redis PubSub 实时更新，从全局服务读取）
+        from app.services.dynamic_fallback_service import get_dynamic_fallback_service
+        svc = get_dynamic_fallback_service()
+        if svc:
+            resolved = svc.get(word)
+            if resolved:
+                return resolved
 
-        # 第3级：FAISS 向量近邻检索
+        # 第3级：FAISS 向量近邻检索（需满足最低相似度阈值）
         similar = self.oov_detector.find_similar(word, top_k=1)
-        if similar:
+        if similar and similar[0][1] >= self._FAISS_MIN_SIMILARITY:
             return similar[0][0]
 
-        # 第4级：基于词性的智能默认降级
+        # 第4级：基于词性的智能默认降级（兜底，不返回未处理的 OOV 词）
         return self._get_pos_based_fallback(word)
 
     def _get_pos_based_fallback(self, word: str) -> str:
@@ -58,8 +64,3 @@ class FallbackResolver:
     def build_oov_map(self, oov_words: list) -> Dict[str, str]:
         """构建 OOV 降级映射"""
         return {word: self.resolve(word) for word in oov_words}
-
-    def update_dynamic_fallback(self, oov_word: str, fallback_word: str):
-        """更新动态降级词典"""
-        self.dynamic_fallback[oov_word] = fallback_word
-        logger.info(f"Updated dynamic fallback: {oov_word} -> {fallback_word}")

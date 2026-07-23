@@ -1,4 +1,4 @@
-# API 契约文档 v3.3
+# API 契约文档 v3.4
 
 > **红线规则**：
 > 1. `/api/v1/auth/register` 和 `/api/v1/auth/login` 为唯一公开接口，其他接口**必须**在请求头携带 `Authorization: Bearer <token>`
@@ -6,10 +6,11 @@
 > 3. `first_pass` 事件**始终**由算法 yield、后端透传、前端按 `ENABLE_STREAM_MASKING` 决定是否加脉冲动画
 > 4. `refined_pass.oov_map` 严格 `{原词: 降级词}` 格式
 > 5. `refined_pass.nmm_hints` 值为字符串枚举 `NEGATION/QUESTION/PAUSE`
-> 6. `refined_pass.alignment_ops` 元素严格 `{type, word, target?, position?}`
+> 6. `refined_pass.alignment_ops` 元素严格 `{type, word, target?, position?, source?}`，其中 `source` 仅 POSTPONE 操作有
 > 7. `/api/v1/tts` 返回的 `audio_url` 必须是**绝对路径**
 > 8. `/api/v1/practice/validate` 接受 `user_answer`，L1/L2 传有序数组、L3 传纯文本
 > 9. `/api/v1/log_mismatch` 接收 `{original_text, failed_options: List[str], context?}`
+> 10. SSE 流正常结束时引擎发送 `done` 事件；发生未捕获异常时发送 `error` 事件
 
 ---
 
@@ -397,7 +398,32 @@ data: {"fallback_text": "string"}
 
 ---
 
-## 三、SSE 事件契约（4个事件）
+### 2.4 GET /health
+**网络隔离**：无限制（可从外部访问）
+**鉴权**：无
+
+**响应**：
+```json
+{
+  "status": "healthy|degraded",
+  "dependencies": {
+    "onnx": "ok|error",
+    "faiss": "ok|error",
+    "llm": "ok|error",
+    "rewrite_pipeline": "ok|error",
+    "normalize_pipeline": "ok|error",
+    "dynamic_dict": "ok|not_loaded"
+  }
+}
+```
+
+> `status` 说明：
+> - `healthy`：ONNX + FAISS 均可用，核心功能完整
+> - `degraded`：ONNX 或 FAISS 不可用，向量检索等部分功能受限
+
+---
+
+## 三、SSE 事件契约（6个事件）
 
 ### 3.1 preheat
 **触发时机**：每次 rewrite 请求开始时
@@ -419,7 +445,7 @@ data: {"fallback_text": "string"}
 ```
 
 ### 3.3 refined_pass
-**触发时机**：算法 LLM 精炼完成后
+**触发时机**：算法 LLM 精炼完成后（正常流程）
 **data 字段**：
 ```json
 {
@@ -431,20 +457,43 @@ data: {"fallback_text": "string"}
       "type": "postpone|advance|delete|insert",
       "word": "string",
       "target": "string|null",
-      "position": number|null
+      "position": "number|null",
+      "source": "number|null"
     }
   ]
 }
 ```
 
+> `position`：词在原始（first_pass）序列中的索引位置。DELETE/INSERT 时表示被操作词的位置；POSTPONE 时表示被移动的词在原始序列中的位置。
+> `source`：仅 POSTPONE 操作有，表示被移动的词在原始（first_pass）序列中的索引位置（与 `position` 相等但语义不同，用于前端还原移动路径）。
+> `target`：仅 POSTPONE 操作有，表示目标位置对应的词（即 refined 中该位置原有的词）。
+
 ### 3.4 fallback
-**触发时机**：算法超时或异常时
+**触发时机**：LLM 精炼失败或超时时
 **data 字段**：
 ```json
 {
   "fallback_text": "兜底文案"
 }
 ```
+> 此时返回 `first_pass`（分词后文本）作为兜底，客户端应展示此文案并停止等待后续事件。
+
+### 3.5 error
+**触发时机**：rewrite 流水线内部发生未捕获异常时
+**data 字段**：
+```json
+{
+  "message": "错误描述字符串"
+}
+```
+
+### 3.6 done
+**触发时机**：流正常结束（所有事件发送完毕后）
+**data 字段**：
+```json
+{}
+```
+> 客户端收到此事件后应关闭 SSE 连接。
 
 ---
 

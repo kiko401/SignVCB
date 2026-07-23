@@ -1,9 +1,6 @@
 """对齐操作生成模块"""
 from typing import List
 from app.schemas.alignment import AlignmentOp, AlignmentOpType
-import loguru
-
-logger = loguru.logger
 
 
 class AlignmentGenerator:
@@ -50,18 +47,19 @@ class AlignmentGenerator:
                         type=AlignmentOpType.POSTPONE,
                         word=orig_word,
                         target=refined_word,
-                        position=orig_idx
+                        position=orig_idx,
+                        source=orig_idx
                     ))
                     orig_idx += 1
                     refined_idx += 1
             else:
                 if orig_idx < len(orig_words):
-                    for w in orig_words[orig_idx:]:
-                        ops.append(AlignmentOp(type=AlignmentOpType.DELETE, word=w, position=orig_idx))
+                    for k, w in enumerate(orig_words[orig_idx:]):
+                        ops.append(AlignmentOp(type=AlignmentOpType.DELETE, word=w, position=orig_idx + k))
                     break
                 if refined_idx < len(refined_words):
-                    for w in refined_words[refined_idx:]:
-                        ops.append(AlignmentOp(type=AlignmentOpType.INSERT, word=w, position=refined_idx))
+                    for k, w in enumerate(refined_words[refined_idx:]):
+                        ops.append(AlignmentOp(type=AlignmentOpType.INSERT, word=w, position=refined_idx + k))
                     break
 
         return ops

@@ -74,6 +74,8 @@ class DynamicFallbackService:
             logger.info("DynamicFallbackService PubSub subscription started")
 
         # 2. 启动定期同步（兜底）
+        # 先立即执行一次同步，再进入周期循环
+        await self.incremental_sync()
         self._poll_task = asyncio.create_task(
             self._sync_loop(periodic_interval)
         )
@@ -94,7 +96,9 @@ class DynamicFallbackService:
         if oov_word not in self.fallback_dict or self.fallback_dict[oov_word] != fallback_word:
             old_count = len(self.fallback_dict)
             self.fallback_dict[oov_word] = fallback_word
-            logger.info(f"Dynamic fallback updated via PubSub: {oov_word} -> {fallback_word} (+{len(self.fallback_dict) - old_count})")
+            new_count = len(self.fallback_dict)
+            diff = new_count - old_count
+            logger.info(f"Dynamic fallback updated via PubSub: {oov_word} -> {fallback_word} (+{diff})")
 
     async def start_periodic_sync(self, interval: int = 60):
         """启动定期同步（兼容旧调用）"""

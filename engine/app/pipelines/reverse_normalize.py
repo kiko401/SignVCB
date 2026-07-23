@@ -15,10 +15,12 @@ class ReverseNormalizePipeline:
 
     def initialize(self):
         self.llm = get_shared_client()
+        logger.info("ReverseNormalizePipeline initialized")
 
     async def normalize(self, text: str, num_options: int = 3) -> List[str]:
         """将 CSL 文本逆向归一化为自然中文"""
         if not self.llm:
+            logger.warning("ReverseNormalizePipeline not initialized, initializing now...")
             self.initialize()
 
         prompt = f"""请将以下 CSL（中文手语）文本转换为自然中文句子。

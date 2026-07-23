@@ -70,14 +70,16 @@ class ForwardRewritePipeline:
             for oov_word, fallback_word in oov_map.items():
                 refined_text = refined_text.replace(oov_word, fallback_word)
 
-        nmm_hints = self.nmm_generator.generate(refined_text)
-
         if oov_status or context:
             try:
                 refined_text = await self.llm_refiner.refine(first_pass_text, oov_map)
             except Exception as e:
-                logger.warning(f"LLM refine failed, using first_pass: {e}")
-                refined_text = first_pass_text
+                logger.warning(f"LLM refine failed, emitting fallback: {e}")
+                yield "fallback", {"fallback_text": first_pass_text}
+                return
+
+        # NMM 必须基于精炼后的 CSL 语序文本生成
+        nmm_hints = self.nmm_generator.generate(refined_text)
 
         alignment_ops = self.alignment_generator.generate(first_pass_text, refined_text)
 

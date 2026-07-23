@@ -25,6 +25,12 @@ async def rewrite(req: RewriteRequest, request: Request):
         except Exception as e:
             logger.error(f"Rewrite error: {e}")
             yield format_sse_event("error", {"message": str(e)})
+        finally:
+            # 确保生成器正常结束前发送结束标记
+            try:
+                yield format_sse_event("done", {})
+            except Exception:
+                pass
 
     return StreamingResponse(
         event_generator(),

@@ -68,4 +68,4 @@ class LLMRefiner:
             return refined
         except Exception as e:
             logger.error(f"LLM refine failed: {e}")
-            return text
+            return text  # 返回原始输入，由 pipeline 层决定回退到 first_pass_text

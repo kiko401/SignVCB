@@ -1,6 +1,5 @@
 """OOV 检测模块"""
 import jieba
-import numpy as np
 import faiss
 import json
 from typing import List, Tuple
@@ -8,6 +7,9 @@ from pathlib import Path
 import loguru
 
 logger = loguru.logger
+
+# 标点符号集合，用于过滤纯标点词
+PUNCTUATION = set("，。、；：？！""''（）【】《》——…·～「」『』")
 
 
 class OOVDetector:
@@ -49,7 +51,8 @@ class OOVDetector:
     def detect(self, text: str) -> Tuple[str, bool, List[str]]:
         """检测 OOV 词"""
         words = list(jieba.cut(text))
-        words = [w.strip() for w in words if w.strip()]
+        # 过滤空白符和纯标点符号
+        words = [w.strip() for w in words if w.strip() and w not in PUNCTUATION]
 
         oov_words = []
         for w in words:

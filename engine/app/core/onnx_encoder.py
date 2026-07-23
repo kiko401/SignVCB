@@ -1,4 +1,5 @@
 """ONNX 向量编码器"""
+import threading
 import numpy as np
 from transformers import AutoTokenizer
 import onnxruntime as ort
@@ -10,9 +11,10 @@ logger = loguru.logger
 
 
 class ONNXEncoder:
-    """BAAI/bge-small-zh-v1.5 ONNX 编码器（全局单例）"""
+    """BAAI/bge-small-zh-v1.5 ONNX 编码器（全局单例，线程安全）"""
 
     _instance = None
+    _lock: threading.Lock = threading.Lock()
 
     def __init__(self):
         self.session = None
@@ -21,7 +23,9 @@ class ONNXEncoder:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
     def load(self, model_path: str, vocab_path: str = None):
@@ -77,6 +81,8 @@ class ONNXEncoder:
             "input_ids": inputs["input_ids"].astype(np.int64),
             "attention_mask": inputs["attention_mask"].astype(np.int64),
         }
+        if "token_type_ids" in inputs:
+            onnx_inputs["token_type_ids"] = inputs["token_type_ids"].astype(np.int64)
 
         outputs = self.session.run(None, onnx_inputs)
         embeddings = outputs[0]

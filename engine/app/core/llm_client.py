@@ -1,11 +1,13 @@
-"""DeepSeek LLM 客户端（全局单例）"""
+"""DeepSeek LLM 客户端（全局单例，线程安全）"""
 import httpx
+import threading
 from typing import Optional
 import loguru
 
 logger = loguru.logger
 
 _client: Optional["DeepSeekClient"] = None
+_client_lock: threading.Lock = threading.Lock()
 
 
 class DeepSeekClient:
@@ -24,7 +26,9 @@ class DeepSeekClient:
     def get_client(cls) -> "DeepSeekClient":
         global _client
         if _client is None:
-            _client = cls()
+            with _client_lock:
+                if _client is None:
+                    _client = cls()
         return _client
 
     @classmethod
