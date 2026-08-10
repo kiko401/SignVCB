@@ -19,6 +19,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   String _ageGroup = 'L2';
   bool _submitting = false;
 
+  /*
+   * @func: dispose
+   * @description: 页面销毁时释放输入控制器资源，避免内存泄漏
+   */
   @override
   void dispose() {
     _usernameController.dispose();
@@ -27,14 +31,25 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
+  /*
+   * @func: _submit
+   * @description: 注册表单提交逻辑，调取注册方法，成功跳转聊天页、失败弹出提示
+   * @return: {Future<void>} 异步注册任务
+   */
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
       await ref.read(authProvider.notifier).register(
-            username: _usernameController.text.trim().isEmpty ? 'demo' : _usernameController.text.trim(),
-            password: _passwordController.text.trim().isEmpty ? 'demo123' : _passwordController.text.trim(),
+            username: _usernameController.text.trim().isEmpty
+                ? 'demo'
+                : _usernameController.text.trim(),
+            password: _passwordController.text.trim().isEmpty
+                ? 'demo123'
+                : _passwordController.text.trim(),
             ageGroup: _ageGroup,
-            nickname: _nicknameController.text.trim().isEmpty ? null : _nicknameController.text.trim(),
+            nickname: _nicknameController.text.trim().isEmpty
+                ? null
+                : _nicknameController.text.trim(),
           );
       if (mounted) context.go('/chat');
     } catch (_) {
@@ -54,7 +69,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              TextField(controller: _usernameController, decoration: const InputDecoration(labelText: '用户名')),
+              TextField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(labelText: '用户名')),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
@@ -62,7 +79,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 obscureText: true,
               ),
               const SizedBox(height: 16),
-              TextField(controller: _nicknameController, decoration: const InputDecoration(labelText: '昵称')),
+              TextField(
+                  controller: _nicknameController,
+                  decoration: const InputDecoration(labelText: '昵称')),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _ageGroup,

@@ -20,26 +20,39 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   void initState() {
-    super.initState();
+    //`initState` 页面刚创建完毕立刻执行
+    super.initState(); //等待 3 秒之后执行跳转函数 _maybeRedirect
     _timer = Timer(const Duration(seconds: 3), _maybeRedirect);
   }
 
+  /*
+   * @func: dispose
+   * @description: 页面关闭时取消定时器，防止定时器后台执行引发报错
+   * @return {*}
+   */
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 
+  /*
+   * @func: _maybeRedirect
+   * @description: 根据认证状态决定跳转页面
+   */
   void _maybeRedirect() {
-    if (!mounted) return;
-    final status = ref.read(authProvider).status;
+    if (!mounted) return; //页面已经关闭，直接终止后续代码
+    final status = ref.read(authProvider).status; //读取全局登录状态
     if (status == AuthStatus.initial) {
+      //初始化，正在读取本地缓存；
       _timer = Timer(const Duration(milliseconds: 500), _maybeRedirect);
       return;
     }
     if (status == AuthStatus.authenticated) {
+      //用户已经登录
       context.go('/chat');
     } else {
+      //没有登录
       context.go('/auth/login');
     }
   }
@@ -68,7 +81,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                   borderRadius: BorderRadius.circular(36),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.pets, size: 88, color: AppColors.starPurple),
+                child: const Icon(Icons.pets,
+                    size: 88, color: AppColors.starPurple),
               ),
               const SizedBox(height: 32),
               const Text(
@@ -80,7 +94,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
               const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.starPurple),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppColors.starPurple),
               ),
             ],
           ),

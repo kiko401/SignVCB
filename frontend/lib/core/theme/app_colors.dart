@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; //Flutter UI 基础包
 
 class AppColors {
   const AppColors._();
-
+//构造函数带下划线，外部代码不能 `AppColors()` 新建这个类的对象
+//所有颜色都是 `static const` 静态常量，直接通过 `AppColors.starPurple` 调用
   static const Color starPurple = Color(0xFF9067ED);
   static const Color lilacPurple = Color(0xFFC490F9);
   static const Color morningMist = Color(0xFFEBE3F8);

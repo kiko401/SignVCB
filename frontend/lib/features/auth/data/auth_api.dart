@@ -4,6 +4,7 @@ import '../../../core/storage/token_storage.dart';
 import 'auth_models.dart';
 
 class AuthApi {
+  
   Future<void> login({required String username, required String password}) async {
     final response = AuthResponse(
       token: 'mock-token',
