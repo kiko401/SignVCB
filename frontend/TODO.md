@@ -26,8 +26,8 @@
 当前主线：**边搭边 run，用真实画面建立对项目的理解**。关键前提：**设计系统先行**——先把颜色/字号/圆角/阴影这套 token 定死，之后所有页面都引用它，即使逐页搭样式也不会乱（这是防止"按钮写三四套、间距不统一"的真正机制）。组件不预先全做，而是搭页面时发现复用点再抽取（渐进式抽象）。
 
 - [x] **① 资产目录整理**：给 pubspec 声明的 6 个空 svg 子目录补 `.gitkeep` 占位，消除 "no file found" 构建错误。已验证 `flutter pub get` / `flutter analyze`（No issues）/ `flutter test`（passed）全通过
-- [ ] ② 设计系统补全（地基，先做）：字号层级 / 圆角 / 阴影 / 间距常量（`AppColors` 已有，补 `AppTextStyles`、`AppShadows`、圆角与间距常量；对照设计文档第一部分），并建立统一使用规则
-- [ ] ③ 逐个搭页面静态骨架并 run 起来看（从简单到复杂）：登录/注册 → 个人中心 → 书库 → 练习地图 → 阅读内容 → 三个练习页 → 沟通页（最复杂，放最后）。每页都要处理加载/空/错状态
+- [x] ② 设计系统补全：`AppTextStyles`（5级）/ `AppShadows`（3档）/ `AppColors`（13色）均已就位；新增 `AppDimens`（圆角L1/L2/L3/Toast/Full + 间距6档 + 组件尺寸）。flutter analyze No issues / flutter test passed
+- [ ] ③ 逐个搭页面静态骨架并 run 起来看（从简单到复杂）：登录/注册 → 个人中心 → 书库 → 练习地图 → 阅读内容 → 三个练习页 → 沟通页（最复杂，放最后）。每页都要处理加载/空/错状态 ← **当前下一步**
 - [ ] ④ 通用组件（搭页面过程中按需抽取，不预先全做）：PrimaryButton / SecondaryButton / TextInput / Card / Toast / LoadingOverlay / StarRating / EmptyState / ErrorState
 - [ ] ⑤ 业务组件静态形态：WordCard / ChatBubble / MicButton / InputAssemblyTray / MapPathNode / BookCard（先用假数据，不接网络）
 
