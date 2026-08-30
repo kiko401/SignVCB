@@ -113,6 +113,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> forceLogout() async => logout();
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final StateNotifierProvider<AuthNotifier, AuthState> authProvider =
+    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.watch(authApiProvider));
 });

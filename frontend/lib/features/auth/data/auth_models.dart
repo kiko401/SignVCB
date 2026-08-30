@@ -36,7 +36,7 @@ class AuthResponse {
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
-      token: (json['token'] as String?) ?? '',
+      token: (json['access_token'] as String?) ?? '',
       user: AuthUser.fromJson(json['user'] as Map<String, dynamic>? ?? const {}),
     );
   }

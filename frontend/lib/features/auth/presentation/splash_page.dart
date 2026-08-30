@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/yuyu_avatar.dart';
 import '../application/auth_provider.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
@@ -20,82 +22,51 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   void initState() {
-    //`initState` 页面刚创建完毕立刻执行
-    super.initState(); //等待 3 秒之后执行跳转函数 _maybeRedirect
-    _timer = Timer(const Duration(seconds: 3), _maybeRedirect);
+    super.initState();
+    _timer = Timer(const Duration(seconds: 2), _redirect);
   }
 
-  /*
-   * @func: dispose
-   * @description: 页面关闭时取消定时器，防止定时器后台执行引发报错
-   * @return {*}
-   */
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 
-  /*
-   * @func: _maybeRedirect
-   * @description: 根据认证状态决定跳转页面
-   */
-  void _maybeRedirect() {
-    if (!mounted) return; //页面已经关闭，直接终止后续代码
-    final status = ref.read(authProvider).status; //读取全局登录状态
+  void _redirect() {
+    if (!mounted) return;
+    final status = ref.read(authProvider).status;
     if (status == AuthStatus.initial) {
-      //初始化，正在读取本地缓存；
-      _timer = Timer(const Duration(milliseconds: 500), _maybeRedirect);
+      _timer = Timer(const Duration(milliseconds: 300), _redirect);
       return;
     }
-    if (status == AuthStatus.authenticated) {
-      //用户已经登录
-      context.go('/chat');
-    } else {
-      //没有登录
-      context.go('/auth/login');
-    }
+    context.go(status == AuthStatus.authenticated ? '/chat' : '/auth/login');
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(authProvider, (previous, next) {
-      if (next.status != AuthStatus.initial) {
-        _maybeRedirect();
-      }
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.status != AuthStatus.initial) _redirect();
     });
 
     return Scaffold(
       backgroundColor: AppColors.morningMist,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      body: SafeArea(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
+              const YuyuAvatar(
                 width: 260,
                 height: 260,
-                decoration: BoxDecoration(
-                  color: AppColors.pureWhite,
-                  borderRadius: BorderRadius.circular(36),
-                ),
-                alignment: Alignment.center,
-                child: const Icon(Icons.pets,
-                    size: 88, color: AppColors.starPurple),
+                animationName: 'Yuyu_Welcome',
+                assetPath: 'assets/rive/yuyu.riv',
+                artboardName: 'yuyu_main',
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppDimens.spacingXXL),
               const Text(
-                '听见你的声音，看见你的世界',
-                style: AppTextStyles.body,
+                '听见你的声音\n看见你的世界',
+                style: AppTextStyles.display,
                 textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: AppColors.starPurple),
               ),
             ],
           ),

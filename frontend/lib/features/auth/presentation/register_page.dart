@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimens.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/secondary_button.dart';
+import '../../../shared/widgets/text_input.dart';
 import '../../../shared/widgets/toast.dart';
 import '../application/auth_provider.dart';
 
@@ -19,10 +25,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   String _ageGroup = 'L2';
   bool _submitting = false;
 
-  /*
-   * @func: dispose
-   * @description: 页面销毁时释放输入控制器资源，避免内存泄漏
-   */
   @override
   void dispose() {
     _usernameController.dispose();
@@ -31,11 +33,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
-  /*
-   * @func: _submit
-   * @description: 注册表单提交逻辑，调取注册方法，成功跳转聊天页、失败弹出提示
-   * @return: {Future<void>} 异步注册任务
-   */
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
@@ -62,43 +59,98 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('注册')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              TextField(
+      backgroundColor: AppColors.morningMist,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              children: [
+                const SizedBox(height: 36),
+                Center(
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppColors.pureWhite,
+                      borderRadius: AppDimens.brL1,
+                    ),
+                    child: const Icon(Icons.pets, size: 64, color: AppColors.starPurple),
+                  ),
+                ),
+                const SizedBox(height: AppDimens.spacingXL),
+                const Text(
+                  '创建账号',
+                  style: AppTextStyles.h2,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimens.spacingXXL),
+                AppTextInput(
                   controller: _usernameController,
-                  decoration: const InputDecoration(labelText: '用户名')),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: '密码'),
-                obscureText: true,
-              ),
-              const SizedBox(height: 16),
-              TextField(
+                  hint: '用户名',
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: AppDimens.spacingM),
+                AppTextInput(
+                  controller: _passwordController,
+                  hint: '密码',
+                  obscureText: true,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: AppDimens.spacingM),
+                AppTextInput(
                   controller: _nicknameController,
-                  decoration: const InputDecoration(labelText: '昵称')),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _ageGroup,
-                items: const [
-                  DropdownMenuItem(value: 'L1', child: Text('L1 启蒙期')),
-                  DropdownMenuItem(value: 'L2', child: Text('L2 识字期')),
-                  DropdownMenuItem(value: 'L3', child: Text('L3 表达期')),
-                ],
-                onChanged: (value) => setState(() => _ageGroup = value ?? 'L2'),
-                decoration: const InputDecoration(labelText: '年龄段'),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _submitting ? null : _submit,
-                child: Text(_submitting ? '注册中...' : '注册'),
-              ),
-            ],
+                  hint: '昵称（选填）',
+                  textInputAction: TextInputAction.done,
+                ),
+                const SizedBox(height: AppDimens.spacingM),
+                // 年龄段选择器
+                Container(
+                  height: AppDimens.inputHeight,
+                  decoration: BoxDecoration(
+                    color: AppColors.cloudGray,
+                    borderRadius: AppDimens.brL2,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _ageGroup,
+                      isExpanded: true,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.calmBlue),
+                      style: AppTextStyles.body.copyWith(color: AppColors.calmBlue),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'L1',
+                          child: Text('L1 启蒙期'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'L2',
+                          child: Text('L2 识字期'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'L3',
+                          child: Text('L3 表达期'),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() => _ageGroup = v ?? 'L2'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppDimens.spacingXXL),
+                PrimaryButton(
+                  label: _submitting ? '注册中...' : '注册',
+                  onPressed: _submitting ? null : _submit,
+                  loading: _submitting,
+                ),
+                const SizedBox(height: AppDimens.spacingM),
+                SecondaryButton(
+                  label: '已有账号？去登录',
+                  onPressed: () => context.go('/auth/login'),
+                ),
+                const SizedBox(height: AppDimens.spacingXXL),
+              ],
+            ),
           ),
         ),
       ),

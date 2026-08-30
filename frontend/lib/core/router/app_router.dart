@@ -101,8 +101,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       //带参数路由：书本阅读详情页
       GoRoute(
         path: '/reading/content/:bookId',
-        builder: (_, state) =>
-            ReadingContentPage(bookId: state.pathParameters['bookId'] ?? ''),
+        builder: (_, state) {
+          final bookIdStr = state.pathParameters['bookId'] ?? '0';
+          final bookId = int.tryParse(bookIdStr) ?? 0;
+          return ReadingContentPage(bookId: bookId);
+        },
       ),
       //其余练习页面路由
       GoRoute(
