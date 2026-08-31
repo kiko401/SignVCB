@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/page_header.dart';
+import '../../../shared/widgets/yuyu_avatar.dart';
 
 class SentenceOrderPage extends StatefulWidget {
   const SentenceOrderPage({super.key});
@@ -12,7 +14,6 @@ class SentenceOrderPage extends StatefulWidget {
 }
 
 class _SentenceOrderPageState extends State<SentenceOrderPage> {
-  // 画布笔迹点
   final List<Offset> _points = [];
   bool _showResult = false;
 
@@ -20,94 +21,144 @@ class _SentenceOrderPageState extends State<SentenceOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.morningMist,
-      appBar: AppBar(
-        backgroundColor: AppColors.pureWhite,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.calmBlue),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text('描字练习', style: AppTextStyles.h2),
-        actions: [
-          TextButton(
-            onPressed: () => setState(() {
-              _points.clear();
-              _showResult = false;
-            }),
-            child: Text('重置',
-                style: AppTextStyles.caption.copyWith(color: AppColors.starPurple)),
-          ),
-        ],
-      ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: AppDimens.spacingL),
-            // 呦呦 HoldingBrush 占位
+            PageHeader(
+              title: '描字练习',
+              onBack: () => context.go('/practice/map'),
+              actions: [
+                TextButton(
+                  onPressed: () => setState(() {
+                    _points.clear();
+                    _showResult = false;
+                  }),
+                  child: Text(
+                    '重置',
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 13,
+                      color: AppColors.starPurple,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    color: AppColors.pureWhite,
-                    shape: BoxShape.circle,
+                const SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: YuyuAvatar(
+                    width: 72,
+                    height: 72,
+                    animationName: 'Yuyu_HoldingBrush',
+                    assetPath: 'assets/rive/yuyu.riv',
+                    artboardName: 'yuyu_main',
                   ),
-                  child: const Icon(Icons.draw, size: 48, color: AppColors.calmBlue),
                 ),
-                const SizedBox(width: AppDimens.spacingM),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('跟着虚线', style: AppTextStyles.body),
-                    Text('描写这个字', style: AppTextStyles.body.copyWith(color: AppColors.starPurple)),
+                    Text('跟着虚线',
+                        style: AppTextStyles.body.copyWith(fontSize: 18)),
+                    Text(
+                      '描写这个字',
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 18,
+                        color: AppColors.starPurple,
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: AppDimens.spacingXL),
-            // 田字格画布
-            Center(
-              child: SizedBox(
-                width: 360,
-                height: 360,
-                child: GestureDetector(
-                  onPanStart: (d) => setState(() => _points.add(d.localPosition)),
-                  onPanUpdate: (d) => setState(() => _points.add(d.localPosition)),
-                  onPanEnd: (_) {
-                    setState(() => _points.add(Offset.infinite));
-                    Future.delayed(const Duration(milliseconds: 800), () {
-                      if (mounted) setState(() => _showResult = true);
-                    });
-                  },
-                  child: CustomPaint(
-                    painter: _TianZiGePainter(points: _points, showResult: _showResult),
+            const SizedBox(height: 18),
+            Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                color: AppColors.pureWhite,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0D9067ED),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
                   ),
+                ],
+              ),
+              child: GestureDetector(
+                onPanStart: (d) => setState(() => _points.add(d.localPosition)),
+                onPanUpdate: (d) =>
+                    setState(() => _points.add(d.localPosition)),
+                onPanEnd: (_) {
+                  setState(() => _points.add(Offset.infinite));
+                  Future.delayed(const Duration(milliseconds: 700), () {
+                    if (mounted) setState(() => _showResult = true);
+                  });
+                },
+                child: CustomPaint(
+                  painter: _TianZiGePainter(
+                      points: _points, showResult: _showResult),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.cloudGray,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.tips_and_updates_rounded,
+                        color: AppColors.starPurple, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '先描横竖，再慢慢连起来。',
+                        style: AppTextStyles.caption.copyWith(fontSize: 12),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             const Spacer(),
             if (_showResult)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
-                  padding: const EdgeInsets.all(AppDimens.spacingM),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.sproutYellow,
-                    borderRadius: AppDimens.brL2,
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.star_rounded, color: AppColors.cheeseYellow, size: 32),
-                      const SizedBox(width: AppDimens.spacingS),
-                      Text('写得很棒！', style: AppTextStyles.body.copyWith(color: AppColors.calmBlue)),
+                      const Icon(Icons.star_rounded,
+                          color: AppColors.cheeseYellow, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        '写得很棒！',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.calmBlue,
+                          fontSize: 18,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-            const SizedBox(height: AppDimens.spacingXXL),
+            const SizedBox(height: 18),
           ],
         ),
       ),
@@ -117,6 +168,7 @@ class _SentenceOrderPageState extends State<SentenceOrderPage> {
 
 class _TianZiGePainter extends CustomPainter {
   const _TianZiGePainter({required this.points, required this.showResult});
+
   final List<Offset> points;
   final bool showResult;
 
@@ -128,28 +180,27 @@ class _TianZiGePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final guidePaint = Paint()
-      ..color = AppColors.cheeseYellow.withValues(alpha: 0.6)
+      ..color = AppColors.cheeseYellow.withValues(alpha: 0.55)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     final tracePaint = Paint()
       ..color = AppColors.calmBlue.withValues(alpha: 0.8)
-      ..strokeWidth = 20
+      ..strokeWidth = 16
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // 田字格外框
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), borderPaint);
-    // 田字格十字线（虚线效果用短横替代）
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), borderPaint);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), borderPaint);
-    // 对角虚线引导
-    canvas.drawLine(const Offset(0, 0), Offset(size.width, size.height), guidePaint);
+    canvas.drawLine(Offset(size.width / 2, 0),
+        Offset(size.width / 2, size.height), borderPaint);
+    canvas.drawLine(Offset(0, size.height / 2),
+        Offset(size.width, size.height / 2), borderPaint);
+    canvas.drawLine(
+        const Offset(0, 0), Offset(size.width, size.height), guidePaint);
     canvas.drawLine(Offset(size.width, 0), Offset(0, size.height), guidePaint);
 
-    // 手指笔迹
     final path = Path();
     bool moveTo = true;
     for (final p in points) {
@@ -169,4 +220,3 @@ class _TianZiGePainter extends CustomPainter {
   bool shouldRepaint(covariant _TianZiGePainter old) =>
       old.points != points || old.showResult != showResult;
 }
-

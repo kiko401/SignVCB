@@ -1,4 +1,4 @@
-enum SseEventType { preheat, firstPass, refinedPass, fallback, unknown }
+enum SseEventType { preheat, firstPass, refinedPass, fallback, error, done, unknown }
 
 class SseEvent {
   const SseEvent({required this.type, required this.rawData});
@@ -22,6 +22,10 @@ class SseEvent {
         return SseEventType.refinedPass;
       case 'fallback':
         return SseEventType.fallback;
+      case 'error':
+        return SseEventType.error;
+      case 'done':
+        return SseEventType.done;
       default:
         return SseEventType.unknown;
     }

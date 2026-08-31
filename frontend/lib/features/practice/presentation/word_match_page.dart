@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/page_header.dart';
+import '../../../shared/widgets/yuyu_avatar.dart';
 
 class WordMatchPage extends StatefulWidget {
   const WordMatchPage({super.key});
@@ -16,51 +18,80 @@ class _WordMatchPageState extends State<WordMatchPage> {
   final List<bool?> _results = [null, null, null, null];
 
   static const _words = ['苹果', '猫咪', '跑步', '书包'];
-  static const _icons = [Icons.apple, Icons.pets, Icons.directions_run, Icons.backpack];
+  static const _icons = [
+    Icons.apple_rounded,
+    Icons.pets_rounded,
+    Icons.directions_run_rounded,
+    Icons.backpack_rounded,
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.morningMist,
-      appBar: AppBar(
-        backgroundColor: AppColors.pureWhite,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.calmBlue),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text('拼图练习', style: AppTextStyles.h2),
-      ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: AppDimens.spacingL),
-            // 呦呦 HoldingTray 占位
-            Center(
-              child: Container(
+            PageHeader(
+              title: '拼图练习',
+              onBack: () => context.go('/practice/map'),
+            ),
+            const SizedBox(height: 14),
+            const SizedBox(
+              width: 56,
+              height: 56,
+              child: YuyuAvatar(
                 width: 56,
                 height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.pureWhite,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.extension, size: 28, color: AppColors.starPurple),
+                animationName: 'Yuyu_HoldingTray',
+                assetPath: 'assets/rive/yuyu.riv',
+                artboardName: 'yuyu_main',
               ),
             ),
-            const SizedBox(height: AppDimens.spacingS),
-            const Text('找到对应的词卡', style: AppTextStyles.caption),
-            const SizedBox(height: AppDimens.spacingXXL),
-            // 词卡网格
+            const SizedBox(height: 8),
+            Text(
+              '把词卡拼起来',
+              style: AppTextStyles.caption.copyWith(fontSize: 12),
+            ),
+            const SizedBox(height: 18),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.pureWhite,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0D9067ED),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.view_module_rounded,
+                      color: AppColors.starPurple, size: 18),
+                  const SizedBox(width: 8),
+                  Text('目标句子',
+                      style: AppTextStyles.body.copyWith(fontSize: 16)),
+                  const Spacer(),
+                  Text('点选 4 张词卡',
+                      style: AppTextStyles.caption.copyWith(fontSize: 12)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  mainAxisSpacing: AppDimens.spacingM,
-                  crossAxisSpacing: AppDimens.spacingM,
-                  childAspectRatio: AppDimens.wordCardWidth / AppDimens.wordCardHeight,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.18,
                 ),
                 itemCount: _words.length,
                 itemBuilder: (context, i) => _WordCard(
@@ -68,32 +99,36 @@ class _WordMatchPageState extends State<WordMatchPage> {
                   icon: _icons[i],
                   selected: _selected == i,
                   result: _results[i],
-                  onTap: () => setState(() => _selected = _selected == i ? null : i),
+                  onTap: () =>
+                      setState(() => _selected = _selected == i ? null : i),
                 ),
               ),
             ),
             const Spacer(),
-            // 提交按钮
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: SizedBox(
-                height: AppDimens.buttonHeightPrimary,
+                height: 52,
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _selected == null ? null : _checkAnswer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.starPurple,
                     disabledBackgroundColor: AppColors.lightCloudGray,
-                    shape: RoundedRectangleBorder(borderRadius: AppDimens.brL1),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18)),
                   ),
                   child: Text(
                     '确认',
-                    style: AppTextStyles.body.copyWith(color: AppColors.pureWhite),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.pureWhite,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: AppDimens.spacingXXL),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -117,6 +152,7 @@ class _WordCard extends StatelessWidget {
     required this.result,
     required this.onTap,
   });
+
   final String word;
   final IconData icon;
   final bool selected;
@@ -128,7 +164,7 @@ class _WordCard extends StatelessWidget {
     final bg = result == true
         ? AppColors.sproutYellow
         : result == false
-            ? AppColors.kumquatOrange.withValues(alpha: 0.3)
+            ? AppColors.kumquatOrange.withValues(alpha: 0.28)
             : selected
                 ? AppColors.morningMist
                 : AppColors.cloudGray;
@@ -136,12 +172,12 @@ class _WordCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: AppDimens.brToast,
+          borderRadius: BorderRadius.circular(18),
           border: selected
-              ? Border.all(color: AppColors.starPurple, width: AppDimens.borderWidthFocus)
+              ? Border.all(color: AppColors.starPurple, width: 1.5)
               : null,
           boxShadow: selected
               ? const [
@@ -156,13 +192,12 @@ class _WordCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 36, color: AppColors.calmBlue),
+            Icon(icon, size: 30, color: AppColors.calmBlue),
             const SizedBox(height: 6),
-            Text(word, style: AppTextStyles.body),
+            Text(word, style: AppTextStyles.body.copyWith(fontSize: 18)),
           ],
         ),
       ),
     );
   }
 }
-

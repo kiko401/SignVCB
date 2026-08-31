@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/page_header.dart';
+import '../../../shared/widgets/yuyu_avatar.dart';
 
 class PracticeMapPage extends StatelessWidget {
   const PracticeMapPage({super.key});
 
   static const _nodes = [
-    _NodeData(label: '拼图练习', route: '/practice/word_match', icon: Icons.extension, color: AppColors.starPurple),
-    _NodeData(label: '描字练习', route: '/practice/sentence_order', icon: Icons.edit, color: AppColors.calmBlue),
-    _NodeData(label: '跟读练习', route: '/practice/sign_recognize', icon: Icons.mic, color: AppColors.sproutYellow),
+    _NodeData(
+      label: '拼图练习',
+      subtitle: '找一找、拼一拼',
+      route: '/practice/word_match',
+      icon: Icons.extension_rounded,
+      color: AppColors.starPurple,
+      stars: 3,
+      xAlign: -0.8,
+    ),
+    _NodeData(
+      label: '描字练习',
+      subtitle: '跟着线条写',
+      route: '/practice/sentence_order',
+      icon: Icons.draw_rounded,
+      color: AppColors.calmBlue,
+      stars: 1,
+      xAlign: 0.8,
+    ),
+    _NodeData(
+      label: '跟读练习',
+      subtitle: '开口读一读',
+      route: '/practice/sign_recognize',
+      icon: Icons.mic_rounded,
+      color: AppColors.sproutYellow,
+      stars: 0,
+      xAlign: -0.35,
+    ),
   ];
 
   @override
@@ -19,50 +45,117 @@ class PracticeMapPage extends StatelessWidget {
       backgroundColor: AppColors.morningMist,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 顶部标题 + 呦呦占位
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
-              child: Row(
-                children: [
-                  const Expanded(child: Text('练习地图', style: AppTextStyles.h2)),
-                  // 呦呦 Backflip 占位
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: const BoxDecoration(
-                      color: AppColors.pureWhite,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.directions_run, size: 36, color: AppColors.starPurple),
+            PageHeader(
+              title: '练习地图',
+              onBack: () => context.go('/chat'),
+              actions: const [
+                SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: YuyuAvatar(
+                    width: 42,
+                    height: 42,
+                    animationName: 'Yuyu_Backflip',
+                    assetPath: 'assets/rive/yuyu.riv',
+                    artboardName: 'yuyu_main',
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: AppDimens.spacingL),
-            // 地图主体
             Expanded(
-              child: Stack(
-                children: [
-                  // 路径曲线
-                  Positioned.fill(
-                    child: CustomPaint(painter: _PathPainter()),
-                  ),
-                  // 节点列
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(painter: _PathPainter()),
+                    ),
+                    Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        for (var i = 0; i < _nodes.length; i++)
-                          _MapNode(
-                            node: _nodes[i],
-                            stars: i == 0 ? 3 : i == 1 ? 1 : 0,
-                            alignRight: i.isOdd,
+                        for (final node in _nodes)
+                          Align(
+                            alignment: Alignment(node.xAlign, 0),
+                            child: _MapNode(node: node),
                           ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapNode extends StatelessWidget {
+  const _MapNode({required this.node});
+
+  final _NodeData node;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.go(node.route),
+      child: Container(
+        width: 238,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0D9067ED),
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [node.color.withValues(alpha: 0.85), node.color],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(node.icon, color: AppColors.pureWhite, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    node.label,
+                    style: AppTextStyles.body.copyWith(fontSize: 17),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    node.subtitle,
+                    style: AppTextStyles.caption.copyWith(fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: List.generate(3, (i) {
+                      return Icon(
+                        i < node.stars
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        size: 18,
+                        color: i < node.stars
+                            ? AppColors.cheeseYellow
+                            : AppColors.lightCloudGray,
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -74,112 +167,57 @@ class PracticeMapPage extends StatelessWidget {
   }
 }
 
-class _MapNode extends StatelessWidget {
-  const _MapNode({required this.node, required this.stars, required this.alignRight});
-  final _NodeData node;
-  final int stars;
-  final bool alignRight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: alignRight ? MainAxisAlignment.end : MainAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            // 节点圆圈
-            GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed(node.route),
-              child: Container(
-                width: 88,
-                height: 88,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [node.color.withValues(alpha: 0.8), node.color],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: node.color.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Container(
-                    width: 72,
-                    height: 72,
-                    decoration: const BoxDecoration(
-                      color: AppColors.pureWhite,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(node.icon, size: 32, color: node.color),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppDimens.spacingXS),
-            Text(node.label, style: AppTextStyles.caption.copyWith(color: AppColors.calmBlue)),
-            const SizedBox(height: AppDimens.spacingXS),
-            // 星星评分
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(3, (i) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Icon(
-                    i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                    size: AppDimens.starSize,
-                    color: i < stars ? AppColors.cheeseYellow : AppColors.lightCloudGray,
-                  ),
-                );
-              }),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 class _PathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path();
-    final third = size.height / 4;
-    path.moveTo(size.width * 0.25, third);
-    path.cubicTo(
-      size.width * 0.1, third * 1.5,
-      size.width * 0.9, third * 1.5,
-      size.width * 0.75, third * 2,
-    );
-    path.cubicTo(
-      size.width * 0.9, third * 2.5,
-      size.width * 0.1, third * 2.5,
-      size.width * 0.25, third * 3,
-    );
-
-    // 虚线效果
-    final dashPaint = Paint()
-      ..color = AppColors.lilacPurple.withValues(alpha: 0.4)
+    final paint = Paint()
+      ..color = AppColors.lilacPurple.withValues(alpha: 0.45)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawPath(path, dashPaint);
+    final path = Path()
+      ..moveTo(size.width * 0.25, size.height * 0.12)
+      ..cubicTo(
+        size.width * 0.55,
+        size.height * 0.22,
+        size.width * 0.45,
+        size.height * 0.42,
+        size.width * 0.72,
+        size.height * 0.52,
+      )
+      ..cubicTo(
+        size.width * 0.38,
+        size.height * 0.67,
+        size.width * 0.35,
+        size.height * 0.82,
+        size.width * 0.24,
+        size.height * 0.92,
+      );
+
+    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _PathPainter oldDelegate) => false;
 }
 
 class _NodeData {
-  const _NodeData({required this.label, required this.route, required this.icon, required this.color});
+  const _NodeData({
+    required this.label,
+    required this.subtitle,
+    required this.route,
+    required this.icon,
+    required this.color,
+    required this.stars,
+    required this.xAlign,
+  });
+
   final String label;
+  final String subtitle;
   final String route;
   final IconData icon;
   final Color color;
+  final int stars;
+  final double xAlign;
 }

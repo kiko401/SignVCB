@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 760">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D5C2F8"/>
+      <stop offset="1" stop-color="#F2E9FC"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="760" fill="url(#bg)"/>
+  <path d="M0 535q120-95 260-20t340-20v265H0z" fill="#A8D9D0"/>
+  <path d="M0 600q118-80 246-14t354-20v194H0z" fill="#80C3C2"/>
+  <path d="M266 760q15-146 73-238 45-71 78-166" fill="none" stroke="#DDF4F0" stroke-width="72" stroke-linecap="round"/>
+  <ellipse cx="300" cy="360" rx="102" ry="116" fill="#FFF"/>
+  <path d="M228 285q-8-88 28-111 22 67 54 68 37-5 66-66 36 28 18 109z" fill="#FFF"/>
+  <path d="M252 320l-32-50m32 50l-3-59m100 59l34-50m-34 50l5-59" stroke="#C6A475" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="268" cy="355" r="10" fill="#6792BC"/><circle cx="337" cy="355" r="10" fill="#6792BC"/>
+  <path d="M284 389q16 15 32 0" fill="none" stroke="#C97978" stroke-width="9" stroke-linecap="round"/>
+  <text x="300" y="92" text-anchor="middle" fill="#6792BC" font-family="sans-serif" font-size="32" font-weight="700">勇敢向前走</text>
+</svg>

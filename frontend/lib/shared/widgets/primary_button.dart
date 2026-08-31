@@ -17,33 +17,72 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool disabled = loading || onPressed == null;
+
     return SizedBox(
       height: AppDimens.buttonHeightPrimary,
       width: double.infinity,
       child: AnimatedScale(
         scale: onPressed == null ? 1.0 : 1.0,
         duration: const Duration(milliseconds: 100),
-        child: ElevatedButton(
-          onPressed: (loading || onPressed == null) ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.starPurple,
-            disabledBackgroundColor: AppColors.lightCloudGray,
-            foregroundColor: AppColors.pureWhite,
-            disabledForegroundColor: AppColors.thinCloudGray,
-            shape: RoundedRectangleBorder(borderRadius: AppDimens.brL1),
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            elevation: 0,
-          ),
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: AppColors.pureWhite,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: AppDimens.brL1,
+            gradient: disabled
+                ? LinearGradient(
+                    colors: [
+                      AppColors.lightCloudGray,
+                      AppColors.lightCloudGray.withValues(alpha: 0.92),
+                    ],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.lilacPurple,
+                      AppColors.starPurple,
+                    ],
                   ),
-                )
-              : Text(label, style: AppTextStyles.body.copyWith(color: AppColors.pureWhite)),
+            boxShadow: disabled
+                ? const []
+                : [
+                    BoxShadow(
+                      color: AppColors.starPurple.withValues(alpha: 0.20),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+          ),
+          child: ElevatedButton(
+            onPressed: disabled ? null : onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              disabledBackgroundColor: Colors.transparent,
+              disabledForegroundColor: AppColors.thinCloudGray,
+              foregroundColor: AppColors.pureWhite,
+              shape: RoundedRectangleBorder(borderRadius: AppDimens.brL1),
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              elevation: 0,
+            ),
+            child: loading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.pureWhite,
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.pureWhite,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                    ),
+                  ),
+          ),
         ),
       ),
     );

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/page_header.dart';
+import '../../../shared/widgets/yuyu_avatar.dart';
 
 class SignRecognizePage extends StatefulWidget {
   const SignRecognizePage({super.key});
@@ -19,39 +21,32 @@ class _SignRecognizePageState extends State<SignRecognizePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.morningMist,
-      appBar: AppBar(
-        backgroundColor: AppColors.pureWhite,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.calmBlue),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text('跟读练习', style: AppTextStyles.h2),
-      ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: AppDimens.spacingXXL),
-            // 呦呦 Signing 占位
-            Center(
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: AppColors.pureWhite,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.sign_language, size: 40, color: AppColors.starPurple),
+            PageHeader(
+              title: '跟读练习',
+              onBack: () => context.go('/practice/map'),
+            ),
+            const SizedBox(height: 16),
+            const SizedBox(
+              width: 72,
+              height: 72,
+              child: YuyuAvatar(
+                width: 72,
+                height: 72,
+                animationName: 'Yuyu_Signing',
+                assetPath: 'assets/rive/yuyu.riv',
+                artboardName: 'yuyu_main',
               ),
             ),
-            const SizedBox(height: AppDimens.spacingL),
-            // 目标句子展示
+            const SizedBox(height: 14),
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              padding: const EdgeInsets.all(AppDimens.spacingL),
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.pureWhite,
-                borderRadius: AppDimens.brL2,
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x0D9067ED),
@@ -62,68 +57,76 @@ class _SignRecognizePageState extends State<SignRecognizePage> {
               ),
               child: Column(
                 children: [
+                  Text('请跟读',
+                      style: AppTextStyles.caption.copyWith(fontSize: 12)),
+                  const SizedBox(height: 6),
                   Text(
-                    '请跟读：',
-                    style: AppTextStyles.caption.copyWith(color: AppColors.thinCloudGray),
+                    '我想吃苹果',
+                    style: AppTextStyles.h1.copyWith(fontSize: 28),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppDimens.spacingXS),
-                  const Text('我想吃苹果', style: AppTextStyles.h1, textAlign: TextAlign.center),
                 ],
               ),
             ),
-            const SizedBox(height: AppDimens.spacingXXL),
-            // 录音波形占位
+            const SizedBox(height: 20),
             AnimatedOpacity(
               opacity: _recording ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 180),
               child: Container(
-                width: 160,
-                height: 80,
+                width: 152,
+                height: 72,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
                   color: AppColors.calmBlue,
-                  borderRadius: AppDimens.brFull,
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(5, (i) {
                     return AnimatedContainer(
-                      duration: Duration(milliseconds: 200 + i * 60),
+                      duration: Duration(milliseconds: 160 + i * 40),
                       width: 8,
-                      height: _recording ? (20.0 + i * 8) : 8,
+                      height: _recording ? (18.0 + i * 6) : 8,
                       decoration: BoxDecoration(
-                        color: i.isEven ? AppColors.starPurple : AppColors.cheeseYellow,
-                        borderRadius: AppDimens.brFull,
+                        color: i.isEven
+                            ? AppColors.starPurple
+                            : AppColors.cheeseYellow,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     );
                   }),
                 ),
               ),
             ),
-            if (_recording) const SizedBox(height: AppDimens.spacingXXL),
-            const Spacer(),
-            // 结果反馈
+            const SizedBox(height: 18),
             if (_done)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
-                  padding: const EdgeInsets.all(AppDimens.spacingM),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.sproutYellow,
-                    borderRadius: AppDimens.brL2,
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.star_rounded, color: AppColors.cheeseYellow, size: 32),
-                      const SizedBox(width: AppDimens.spacingS),
-                      Text('读得很棒！',
-                          style: AppTextStyles.body.copyWith(color: AppColors.calmBlue)),
+                      const Icon(Icons.star_rounded,
+                          color: AppColors.cheeseYellow, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        '读得很棒！',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.calmBlue,
+                          fontSize: 18,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-            if (_done) const SizedBox(height: AppDimens.spacingL),
-            // 麦克风按钮
+            const Spacer(),
             GestureDetector(
               onLongPressStart: (_) => setState(() {
                 _recording = true;
@@ -131,42 +134,46 @@ class _SignRecognizePageState extends State<SignRecognizePage> {
               }),
               onLongPressEnd: (_) {
                 setState(() => _recording = false);
-                Future.delayed(const Duration(milliseconds: 600),
-                    () => mounted ? setState(() => _done = true) : null);
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) setState(() => _done = true);
+                });
               },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: AppDimens.micButtonSize,
-                height: AppDimens.micButtonSize,
+                duration: const Duration(milliseconds: 180),
+                width: 88,
+                height: 88,
                 decoration: BoxDecoration(
-                  color: _recording ? AppColors.sproutYellow : AppColors.starPurple,
+                  color: _recording
+                      ? AppColors.sproutYellow
+                      : AppColors.starPurple,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (_recording ? AppColors.sproutYellow : AppColors.starPurple)
+                      color: (_recording
+                              ? AppColors.sproutYellow
+                              : AppColors.starPurple)
                           .withValues(alpha: 0.35),
-                      blurRadius: _recording ? 28 : 20,
-                      offset: const Offset(0, 10),
+                      blurRadius: _recording ? 24 : 18,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Icon(
-                  _recording ? Icons.mic : Icons.mic_none,
+                  _recording ? Icons.mic : Icons.mic_none_rounded,
                   color: AppColors.pureWhite,
-                  size: 40,
+                  size: 36,
                 ),
               ),
             ),
-            const SizedBox(height: AppDimens.spacingXS),
+            const SizedBox(height: 10),
             Text(
               _recording ? '松手提交' : '长按录音',
-              style: AppTextStyles.caption,
+              style: AppTextStyles.caption.copyWith(fontSize: 12),
             ),
-            const SizedBox(height: AppDimens.spacingXXL),
+            const SizedBox(height: 22),
           ],
         ),
       ),
     );
   }
 }
-
